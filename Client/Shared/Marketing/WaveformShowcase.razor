@@ -1,0 +1,45 @@
+@* Abstract audio-waveform visual for the commercial Hero — evokes a mix/master session
+   without depending on real photography or client assets. *@
+
+<div class="relative overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-surface/70 via-background to-background p-8 shadow-card">
+    <div class="absolute inset-0 bg-grid-glow"></div>
+
+    <div class="relative flex items-center justify-between">
+        <div>
+            <p class="text-xs font-medium uppercase tracking-[0.14em] text-text-secondary">Reel JCB Studio</p>
+            <p class="mt-1 text-lg font-semibold text-white">Últimos lanzamientos — 2026</p>
+        </div>
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent shadow-glow">
+            <svg class="ml-0.5 h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+            </svg>
+        </span>
+    </div>
+
+    <div class="relative mt-10 flex h-48 items-end justify-between gap-[3px] sm:h-56">
+        @for (var i = 0; i < Heights.Length; i++)
+        {
+            var h = Heights[i];
+            <span class="animate-pulse-slow w-full rounded-full bg-gradient-to-t from-primary to-accent"
+                  style="height:@(h)%; animation-delay:@((i % 12) * 0.12)s; opacity:@(0.35 + h / 160.0)"></span>
+        }
+    </div>
+
+    <div class="relative mt-8 flex items-center justify-between text-xs text-text-secondary">
+        <span>00:00</span>
+        <span class="h-px flex-1 mx-4 bg-white/10"></span>
+        <span>03:42</span>
+    </div>
+</div>
+
+@code {
+    // Fixed, deterministic bar heights (%) — a hand-tuned waveform silhouette rather
+    // than Random, so the layout never shifts between server/client pre-render passes.
+    private static readonly int[] Heights =
+    {
+        18, 32, 54, 40, 65, 88, 60, 45, 70, 95, 72, 50,
+        38, 60, 82, 55, 40, 66, 90, 68, 48, 30, 58, 78,
+        62, 42, 35, 55, 80, 100, 74, 52, 36, 60, 85, 64,
+        44, 28, 50, 72, 92, 66, 46, 33, 58, 76, 54, 38,
+    };
+}

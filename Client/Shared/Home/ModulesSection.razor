@@ -1,0 +1,30 @@
+<section class="mx-auto max-w-[1400px] px-6 py-16 lg:px-10">
+    <div class="reveal mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Todo conectado</h2>
+        <p class="mt-4 text-text-secondary">
+            Cada módulo de Nexo comparte la misma información en tiempo real, para que el
+            equipo de JCB Studio nunca trabaje con datos aislados.
+        </p>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        @foreach (var module in Modules)
+        {
+            <ModuleCard Item="module" />
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly ModuleItem[] Modules =
+    {
+        new("project",    "Proyectos",     "Gestioná todas las producciones musicales de principio a fin.",           "/proyectos",     "from-primary",  "to-accent"),
+        new("artist",     "Artistas",      "Administración de artistas, roster y colaboradores.",                     "/artistas",      "from-accent",   "to-primary"),
+        new("production", "Producciones", "Seguimiento detallado de cada producción en curso.",                       "/producciones",  "from-primary",  "to-accent"),
+        new("calendar",   "Agenda",        "Calendario de sesiones, reuniones y fechas clave.",                       "/agenda",        "from-accent",   "to-primary"),
+        new("tasks",      "Tareas",        "Gestión del trabajo interno y responsables de cada equipo.",              "/tareas",        "from-primary",  "to-accent"),
+        new("files",      "Archivos",      "Centralización de documentos, contratos y recursos.",                    "/archivos",      "from-accent",   "to-primary"),
+        new("budget",     "Presupuestos",  "Cotizaciones, costos y seguimiento financiero de cada proyecto.",         "/presupuestos",  "from-primary",  "to-accent"),
+        new("reports",    "Reportes",      "Indicadores y estadísticas para decisiones basadas en datos.",            "/reportes",      "from-accent",   "to-primary"),
+    };
+}

@@ -1,0 +1,18 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Visual Studio
+.vs/
+
+# Node / npm (Tailwind build pipeline in Client/)
+node_modules/
+npm-debug.log*
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude Code local project settings
+.claude/

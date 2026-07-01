@@ -1,0 +1,61 @@
+@* Conceptual "operations hub" visual: floating module cards connected to a central
+   Nexo node via SVG lines. Node positions are percentages so the connectors stay
+   perfectly aligned with the cards at every viewport size — no JS measuring needed. *@
+
+<div class="@@container relative h-[420px] w-full overflow-hidden rounded-3xl border border-white/[0.06] bg-gradient-to-br from-surface/70 via-background to-background sm:h-[480px] lg:h-[560px]">
+
+    <div class="absolute inset-0 bg-grid-glow"></div>
+
+    <svg class="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+            <linearGradient id="connectorGradient" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#6C5CE7" />
+                <stop offset="100%" stop-color="#00D4FF" />
+            </linearGradient>
+        </defs>
+        @foreach (var node in Nodes)
+        {
+            <line x1="50" y1="50" x2="@node.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  y2="@node.Top.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                  stroke="url(#connectorGradient)" stroke-width="0.25" stroke-dasharray="1.5 1.5"
+                  class="animate-dash opacity-40" />
+        }
+    </svg>
+
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div class="absolute inset-0 -m-4 rounded-full border border-primary/30 animate-pulse-slow"></div>
+        <div class="absolute inset-0 -m-8 rounded-full border border-accent/20 animate-pulse-slow" style="animation-delay:1s"></div>
+        <div class="relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent shadow-glow">
+            <span class="text-sm font-bold tracking-tight text-white">Nexo</span>
+        </div>
+    </div>
+
+    @foreach (var node in Nodes)
+    {
+        <div class="absolute -translate-x-1/2 -translate-y-1/2 animate-float"
+             style="top:@(node.Top.ToString(System.Globalization.CultureInfo.InvariantCulture))%; left:@(node.Left.ToString(System.Globalization.CultureInfo.InvariantCulture))%; animation-delay:@(node.AnimationDelaySeconds.ToString(System.Globalization.CultureInfo.InvariantCulture))s">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-surface/80 shadow-card backdrop-blur-md @@[700px]:h-auto @@[700px]:w-auto @@[700px]:justify-start @@[700px]:gap-2 @@[700px]:whitespace-nowrap @@[700px]:rounded-xl @@[700px]:px-3 @@[700px]:py-2.5">
+                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/5 text-accent">
+                    <Icon Name="@node.Icon" CssClass="h-4 w-4" />
+                </span>
+                <span class="hidden text-xs font-medium text-white/90 @@[700px]:inline">@node.Label</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    // Positioned on an ellipse (rx=30, ry=28) around the center hub, inset well within
+    // the container bounds so whitespace-nowrap labels never clip against its edges.
+    private static readonly ConnectedNode[] Nodes =
+    {
+        new("Calendario",    "calendar",   50,   80,   0.0),
+        new("Producción",    "production", 69.8, 71.2, 0.3),
+        new("Presupuestos",  "budget",     78,   50,   0.6),
+        new("Tareas",        "tasks",      69.8, 28.8, 0.9),
+        new("Archivos",      "files",      50,   20,   1.2),
+        new("Proyectos",     "project",    30.2, 28.8, 1.5),
+        new("Artistas",      "artist",     22,   50,   1.8),
+        new("Lanzamientos",  "launch",     30.2, 71.2, 2.1),
+    };
+}

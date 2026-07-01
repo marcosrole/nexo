@@ -1,0 +1,19 @@
+<div class="surface-card group reveal p-6 hover:-translate-y-1 hover:border-white/[0.12] hover:shadow-glow">
+    <div class="flex items-start justify-between">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/20">
+            <Icon Name="@Item.Icon" CssClass="h-5 w-5" />
+        </span>
+
+        <span class="@(Item.IsPositiveTrend ? "text-success" : "text-danger") flex items-center gap-1 rounded-full bg-white/[0.04] px-2.5 py-1 text-xs font-semibold">
+            <Icon Name="@(Item.IsPositiveTrend ? "trend-up" : "trend-down")" CssClass="h-3.5 w-3.5" />
+            @Item.TrendLabel
+        </span>
+    </div>
+
+    <p class="mt-5 text-3xl font-bold tracking-tight text-white">@Item.Value</p>
+    <p class="mt-1 text-sm text-text-secondary">@Item.Label</p>
+</div>
+
+@code {
+    [Parameter] public KpiItem Item { get; set; } = default!;
+}

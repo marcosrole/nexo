@@ -1,0 +1,27 @@
+<section id="servicios" class="mx-auto max-w-[1400px] scroll-mt-24 px-6 py-16 lg:px-10">
+    <div class="reveal mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Servicios</h2>
+        <p class="mt-4 text-text-secondary">
+            Un equipo creativo y técnico para cada etapa de tu producción musical.
+        </p>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach (var service in Services)
+        {
+            <ServiceCard Item="service" />
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly ServiceItem[] Services =
+    {
+        new("recording",   "Grabación",           "Sesiones profesionales con ingenieros y equipamiento de primer nivel."),
+        new("mixing",      "Mezcla",              "Balance y definición sonora para que cada instrumento tenga su lugar."),
+        new("mastering",   "Mastering",           "El pulido final para que tu tema suene consistente en cualquier plataforma."),
+        new("idea",        "Dirección creativa",  "Acompañamiento artístico desde la idea hasta el concepto final."),
+        new("production",  "Producción integral", "Gestionamos todo el proceso productivo de principio a fin."),
+        new("distribution","Distribución digital","Tu música lista para llegar a todas las plataformas de streaming."),
+    };
+}

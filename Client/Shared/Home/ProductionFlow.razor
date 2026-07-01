@@ -1,0 +1,42 @@
+<section id="proceso" class="mx-auto max-w-[1400px] scroll-mt-24 px-6 py-16 lg:px-10">
+    <div class="reveal mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Así trabajamos</h2>
+        <p class="mt-4 text-text-secondary">
+            Desde la idea hasta el lanzamiento, te acompañamos en cada etapa de tu producción.
+        </p>
+    </div>
+
+    <div class="reveal mt-14 overflow-x-auto pb-4">
+        <div class="relative flex min-w-[820px] items-start justify-between gap-2 lg:min-w-0">
+
+            <div class="absolute left-0 right-0 top-6 h-px overflow-hidden bg-white/[0.06]">
+                <div class="h-full w-full bg-flow-gradient bg-[length:200%_100%] opacity-70 animate-flow"></div>
+            </div>
+
+            @foreach (var stage in Stages)
+            {
+                <div class="relative flex flex-1 flex-col items-center px-1 text-center">
+                    <div class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-surface text-primary shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/50 hover:text-accent">
+                        <Icon Name="@stage.Icon" CssClass="h-5 w-5" />
+                    </div>
+                    <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-white/90 sm:text-sm">@stage.Name</p>
+                    <span class="mt-1 text-[11px] text-text-secondary">Etapa @stage.Order</span>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    private static readonly FlowStage[] Stages =
+    {
+        new(1, "Idea",           "idea"),
+        new(2, "Preproducción",  "preproduction"),
+        new(3, "Grabación",      "recording"),
+        new(4, "Edición",        "editing"),
+        new(5, "Mezcla",         "mixing"),
+        new(6, "Mastering",      "mastering"),
+        new(7, "Distribución",   "distribution"),
+        new(8, "Lanzamiento",    "launch"),
+    };
+}

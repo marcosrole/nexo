@@ -1,0 +1,12 @@
+<div class="group reveal surface-card flex flex-col p-6 hover:-translate-y-1.5 hover:border-white/[0.14] hover:shadow-glow">
+    <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
+        <Icon Name="@Item.Icon" CssClass="h-6 w-6" />
+    </span>
+
+    <h3 class="mt-5 text-lg font-semibold tracking-tight text-white">@Item.Title</h3>
+    <p class="mt-2 text-sm leading-relaxed text-text-secondary">@Item.Description</p>
+</div>
+
+@code {
+    [Parameter] public ServiceItem Item { get; set; } = default!;
+}

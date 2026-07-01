@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-white antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  ::selection {
+    @apply bg-primary/40 text-white;
+  }
+}
+
+@layer components {
+  /* Glass surface used across cards, headers and panels */
+  .glass-surface {
+    @apply bg-surface/60 backdrop-blur-xl border border-white/[0.06];
+  }
+
+  .tag-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-text-secondary;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-glow transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_rgba(108,92,231,0.6),0_12px_36px_-6px_rgba(108,92,231,0.7)] active:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:border-white/20 hover:bg-white/[0.06] active:translate-y-0;
+  }
+
+  .surface-card {
+    @apply rounded-2xl border border-white/[0.06] bg-surface/80 shadow-card transition-all duration-300;
+  }
+
+  /* Scroll-reveal primitive, toggled by wwwroot/js/site.js via IntersectionObserver */
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

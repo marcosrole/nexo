@@ -1,0 +1,19 @@
+<div class="group reveal overflow-hidden rounded-2xl border border-white/[0.06] bg-surface/80 shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-white/[0.14] hover:shadow-glow">
+    <div class="relative flex h-40 items-center justify-center bg-gradient-to-br @Item.AccentFrom @Item.AccentTo">
+        <div class="absolute inset-0 bg-black/10 transition-opacity duration-300 group-hover:bg-black/0"></div>
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur-md transition-transform duration-300 group-hover:scale-110">
+            <svg class="ml-0.5 h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5v14l11-7z" />
+            </svg>
+        </span>
+    </div>
+
+    <div class="p-5">
+        <h3 class="text-base font-semibold tracking-tight text-white">@Item.Title</h3>
+        <p class="mt-1 text-sm text-text-secondary">@Item.Genre</p>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PortfolioItem Item { get; set; } = default!;
+}

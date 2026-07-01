@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>JCB Studio | Powered by Nexo</title>
+    <meta name="description" content="Nexo, la plataforma que conecta cada proyecto, artista y producción de JCB Studio." />
+    <base href="/" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="Nexo.Client.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+</head>
+
+<body class="bg-background font-sans">
+    <div id="app">
+        <div class="flex h-screen w-full items-center justify-center bg-background">
+            <div class="flex flex-col items-center gap-4">
+                <div class="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-primary"></div>
+                <p class="text-sm text-text-secondary">Cargando JCB Studio…</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="blazor-error-ui" class="fixed inset-x-0 bottom-0 z-[1000] hidden bg-warning px-6 py-3 text-sm text-background">
+        Ocurrió un error inesperado.
+        <a href="" class="reload font-semibold underline">Recargar</a>
+        <a class="dismiss ml-2 cursor-pointer">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webassembly.js"></script>
+    <script src="js/site.js"></script>
+</body>
+
+</html>

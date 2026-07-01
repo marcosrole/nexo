@@ -1,0 +1,19 @@
+<a href="@Item.Href"
+   class="group reveal surface-card relative flex flex-col p-6 hover:-translate-y-1.5 hover:border-white/[0.14] hover:shadow-glow">
+
+    <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br @Item.AccentFrom @Item.AccentTo text-white shadow-sm transition-transform duration-300 group-hover:scale-110">
+        <Icon Name="@Item.Icon" CssClass="h-6 w-6" />
+    </span>
+
+    <h3 class="mt-5 text-lg font-semibold tracking-tight text-white">@Item.Title</h3>
+    <p class="mt-2 text-sm leading-relaxed text-text-secondary">@Item.Description</p>
+
+    <span class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-all duration-300 group-hover:gap-2.5">
+        Abrir módulo
+        <Icon Name="arrow-right" CssClass="h-4 w-4" />
+    </span>
+</a>
+
+@code {
+    [Parameter] public ModuleItem Item { get; set; } = default!;
+}

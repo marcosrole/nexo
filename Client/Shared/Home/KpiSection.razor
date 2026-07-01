@@ -1,0 +1,20 @@
+<section class="mx-auto max-w-[1400px] px-6 py-16 lg:px-10">
+    <div class="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+        @foreach (var kpi in Kpis)
+        {
+            <KpiCard Item="kpi" />
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly KpiItem[] Kpis =
+    {
+        new("project",    "24",  "Proyectos activos",      "+12%", true),
+        new("production", "9",   "Producciones en curso",  "+4%",  true),
+        new("artist",     "38",  "Artistas registrados",    "+2",  true),
+        new("launch",     "5",   "Próximos lanzamientos",   "Esta semana", true),
+        new("tasks",      "17",  "Tareas pendientes",       "-6%",  false),
+        new("budget",     "6",   "Presupuestos abiertos",   "+1",  true),
+    };
+}

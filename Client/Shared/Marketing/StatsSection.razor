@@ -1,0 +1,21 @@
+<section class="mx-auto max-w-[1400px] px-6 py-16 lg:px-10">
+    <div class="grid grid-cols-2 gap-5 sm:grid-cols-4">
+        @foreach (var stat in Stats)
+        {
+            <div class="reveal surface-card p-6 text-center hover:-translate-y-1 hover:border-white/[0.12]">
+                <p class="text-3xl font-bold tracking-tight text-white sm:text-4xl">@stat.Value</p>
+                <p class="mt-2 text-sm text-text-secondary">@stat.Label</p>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly StatItem[] Stats =
+    {
+        new("150+", "Producciones lanzadas"),
+        new("40+",  "Artistas acompañados"),
+        new("12",   "Premios y reconocimientos"),
+        new("10",   "Años de trayectoria"),
+    };
+}

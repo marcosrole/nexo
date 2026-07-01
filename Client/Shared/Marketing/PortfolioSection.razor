@@ -1,0 +1,27 @@
+<section id="portfolio" class="mx-auto max-w-[1400px] scroll-mt-24 px-6 py-16 lg:px-10">
+    <div class="reveal mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">Nuestro trabajo</h2>
+        <p class="mt-4 text-text-secondary">
+            Una selección de producciones recientes en las que confiaron artistas y sellos.
+        </p>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach (var work in Works)
+        {
+            <PortfolioCard Item="work" />
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly PortfolioItem[] Works =
+    {
+        new("Marea Alta — LP",        "Indie / Rock",       "from-primary",  "to-accent"),
+        new("Nocturna",               "Pop urbano",         "from-accent",   "to-primary"),
+        new("Raíces",                 "Folklore",           "from-primary",  "to-accent"),
+        new("Circuito",               "Electrónica",        "from-accent",   "to-primary"),
+        new("Sur EP",                 "Hip hop",            "from-primary",  "to-accent"),
+        new("Horizonte",              "Cantautor",          "from-accent",   "to-primary"),
+    };
+}
