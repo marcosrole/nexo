@@ -35,6 +35,14 @@
     @apply rounded-2xl border border-white/[0.06] bg-surface/80 shadow-card transition-all duration-300;
   }
 
+  .field-label {
+    @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-text-secondary;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white transition-colors duration-200 placeholder:text-text-secondary/60 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50;
+  }
+
   /* Scroll-reveal primitive, toggled by wwwroot/js/site.js via IntersectionObserver */
   .reveal {
     opacity: 0;

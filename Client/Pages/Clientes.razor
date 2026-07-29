@@ -1,0 +1,181 @@
+@page "/clientes"
+@layout MainLayout
+@using System.Collections.Generic
+@using System.Linq
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+
+<section class="mx-auto max-w-[1400px] px-6 pb-4 pt-14 lg:px-10">
+    <div class="reveal flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="text-sm font-medium uppercase tracking-[0.14em] text-text-secondary">Panel interno</p>
+            <h1 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Clientes</h1>
+            <p class="mt-3 max-w-xl text-text-secondary">
+                Personas y empresas con las que trabaja JCB Studio.
+            </p>
+        </div>
+        <button type="button" class="btn-primary" @onclick="OpenCreateModal">
+            <Icon Name="clients" CssClass="h-4 w-4" />
+            Nuevo cliente
+        </button>
+    </div>
+</section>
+
+<section class="mx-auto max-w-[1400px] px-6 pb-16 lg:px-10">
+    <div class="reveal mb-6 flex flex-wrap gap-2">
+        <button type="button" class="@FilterClass(null)" @onclick="() => SetFilter(null)">Todos</button>
+        <button type="button" class="@FilterClass(TipoCliente.Persona)" @onclick="() => SetFilter(TipoCliente.Persona)">Personas</button>
+        <button type="button" class="@FilterClass(TipoCliente.Empresa)" @onclick="() => SetFilter(TipoCliente.Empresa)">Empresas</button>
+    </div>
+
+    @if (loading)
+    {
+        <p class="text-text-secondary">Cargando clientes...</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <p class="text-danger">@errorMessage</p>
+    }
+    else if (!FilteredClientes.Any())
+    {
+        <div class="surface-card reveal p-10 text-center text-text-secondary">
+            Todavía no hay clientes cargados.
+        </div>
+    }
+    else
+    {
+        <div class="surface-card reveal overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead class="border-b border-white/[0.06] text-xs uppercase tracking-wider text-text-secondary">
+                    <tr>
+                        <th class="px-6 py-4 font-medium">Cliente</th>
+                        <th class="px-6 py-4 font-medium">Tipo</th>
+                        <th class="px-6 py-4 font-medium">Contacto</th>
+                        <th class="px-6 py-4 font-medium">CUIT</th>
+                        <th class="px-6 py-4 font-medium"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/[0.06]">
+                    @foreach (var cliente in FilteredClientes)
+                    {
+                        <tr class="transition-colors duration-200 hover:bg-white/[0.03]">
+                            <td class="px-6 py-4 font-medium text-white">@cliente.NombreCompleto</td>
+                            <td class="px-6 py-4">
+                                <span class="tag-pill">@(cliente.Tipo == TipoCliente.Empresa ? "Empresa" : "Persona")</span>
+                            </td>
+                            <td class="px-6 py-4 text-text-secondary">
+                                <div>@cliente.Email</div>
+                                @if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                                {
+                                    <div class="text-xs">@cliente.Telefono</div>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-text-secondary">@(string.IsNullOrWhiteSpace(cliente.Cuit) ? "—" : cliente.Cuit)</td>
+                            <td class="px-6 py-4 text-right">
+                                <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="() => OpenEditModal(cliente)" aria-label="Editar cliente">
+                                    <Icon Name="editing" CssClass="h-4 w-4" />
+                                </button>
+                                <button type="button" class="ml-3 text-text-secondary transition-colors hover:text-danger" @onclick="() => DeleteCliente(cliente)" aria-label="Eliminar cliente">
+                                    <Icon Name="close" CssClass="h-4 w-4" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@if (showModal)
+{
+    <ClienteFormModal Cliente="editingCliente" OnSaved="HandleSaved" OnCancelled="CloseModal" />
+}
+
+@code {
+    private List<Cliente> clientes = new();
+    private TipoCliente? filter;
+    private bool loading = true;
+    private string errorMessage;
+    private bool showModal;
+    private Cliente editingCliente;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClientes();
+    }
+
+    private async Task LoadClientes()
+    {
+        loading = true;
+        errorMessage = null;
+        try
+        {
+            clientes = await Http.GetFromJsonAsync<List<Cliente>>("api/clientes") ?? new List<Cliente>();
+        }
+        catch (Exception)
+        {
+            errorMessage = "No se pudieron cargar los clientes.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private IEnumerable<Cliente> FilteredClientes =>
+        filter is null ? clientes : clientes.Where(c => c.Tipo == filter);
+
+    private void SetFilter(TipoCliente? tipo) => filter = tipo;
+
+    private string FilterClass(TipoCliente? tipo) =>
+        filter == tipo
+            ? "tag-pill border-primary/40 bg-primary/15 text-white"
+            : "tag-pill cursor-pointer hover:text-white";
+
+    private void OpenCreateModal()
+    {
+        editingCliente = new Cliente { Tipo = TipoCliente.Persona };
+        showModal = true;
+    }
+
+    private void OpenEditModal(Cliente cliente)
+    {
+        editingCliente = new Cliente
+        {
+            Id = cliente.Id,
+            Tipo = cliente.Tipo,
+            Nombre = cliente.Nombre,
+            Apellido = cliente.Apellido,
+            Dni = cliente.Dni,
+            RazonSocial = cliente.RazonSocial,
+            Cuit = cliente.Cuit,
+            CondicionFiscal = cliente.CondicionFiscal,
+            Email = cliente.Email,
+            Telefono = cliente.Telefono,
+            Direccion = cliente.Direccion,
+            FechaAlta = cliente.FechaAlta
+        };
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task HandleSaved()
+    {
+        showModal = false;
+        await LoadClientes();
+    }
+
+    private async Task DeleteCliente(Cliente cliente)
+    {
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar a {cliente.NombreCompleto}?");
+        if (!confirmed) return;
+
+        var response = await Http.DeleteAsync($"api/clientes/{cliente.Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadClientes();
+        }
+    }
+}
