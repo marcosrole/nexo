@@ -45,6 +45,7 @@ Este documento no fue validado con el cliente (decisión del 2026-07-29 de avanz
 |---|---|---|
 | "El presupuesto todavía no tome valor, será hablado, sin un sistema" | `Presupuesto` pasa a **Fase 2** — no se migra ni se construye en el MVP. `Tarifa` se carga a mano al crear el proyecto, y suma su propio campo `FechaAcuerdo` (antes vivía solo en `Presupuesto`) para no perder la regla de vigencia de 3 meses. | Simplifica el MVP: la parte más compleja del modelo (múltiples cotizaciones, `Aceptado`, el puente con Tarifa) se pospone hasta que haga falta de verdad. |
 | "La reportería tampoco quiero que se haga en esta etapa; la info debe estar en pantalla, sin exportar a PDF" | No hay módulo de Reportes en el MVP. Las cifras (horas del mes, por cliente, facturación) se muestran directamente en las pantallas de Proyecto/Cliente. El módulo formal con filtros y exportación a PDF queda en Fase 2. | Evita construir un motor de reportes/exportación antes de validar que el resto del sistema funciona en el día a día. |
+| "El campo Condiciones especiales de cobro es redundante con Observaciones" | Se elimina `Cliente.CondicionesCobro`. Las condiciones especiales de cobro, si existen, se anotan como texto libre dentro de `Observaciones`. | Ambos eran campos de texto libre sin estructura — mantenerlos separados no aportaba nada que Observaciones no cubriera ya. |
 
 ---
 
@@ -84,7 +85,6 @@ erDiagram
         string YouTube "nuevo, fase 2"
         string Observaciones "nuevo"
         string ComoLlego "nuevo"
-        string CondicionesCobro "nuevo, texto libre"
         datetime FechaAlta
     }
 
@@ -217,7 +217,7 @@ erDiagram
 
 Lo único migrado hoy es `Cliente` (`20260701212619_InitialCreate` + `20260703013951_ValidacionesCliente`). Para este entregable se necesita una nueva migración que:
 
-1. Agregue a `Cliente`: `Ciudad`, `Instagram`, `YouTube`, `Observaciones`, `ComoLlego`, `CondicionesCobro`.
+1. Agregue a `Cliente`: `Ciudad`, `Instagram`, `YouTube`, `Observaciones`, `ComoLlego`.
 2. Incorpore **ASP.NET Identity** (tablas `AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, `AspNetUserLogins`), extendiendo `AspNetUsers` con `NombreCompleto`, `ClienteId` y `Activo` en vez de crear una tabla `Usuario` 100% a medida.
 3. Cree las tablas nuevas del MVP: `Proyecto`, `Tarifa` (con `FechaAcuerdo`), `Estudio`, `Sesion`, `TareaCatalogo`, `SesionTarea`, `Pago`, `HistorialCambio`.
 

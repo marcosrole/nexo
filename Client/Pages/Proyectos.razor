@@ -1,0 +1,183 @@
+@page "/proyectos"
+@layout MainLayout
+@using System.Collections.Generic
+@using System.Linq
+@inject HttpClient Http
+@inject IJSRuntime JsRuntime
+
+<section class="mx-auto max-w-[1400px] px-6 pb-4 pt-14 lg:px-10">
+    <div class="reveal flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="text-sm font-medium uppercase tracking-[0.14em] text-text-secondary">Panel interno</p>
+            <h1 class="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Proyectos</h1>
+        </div>
+        <button type="button" class="btn-primary" @onclick="OpenCreateModal">
+            <Icon Name="project" CssClass="h-4 w-4" />
+            Nuevo proyecto
+        </button>
+    </div>
+</section>
+
+<section class="mx-auto max-w-[1400px] px-6 pb-16 lg:px-10">
+    @if (loading)
+    {
+        <p class="text-text-secondary">Cargando proyectos...</p>
+    }
+    else if (errorMessage is not null)
+    {
+        <p class="text-danger">@errorMessage</p>
+    }
+    else if (!proyectos.Any())
+    {
+        <div class="surface-card reveal p-10 text-center text-text-secondary">
+            Todavía no hay proyectos cargados.
+        </div>
+    }
+    else
+    {
+        <div class="surface-card reveal overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead class="border-b border-white/[0.06] text-xs uppercase tracking-wider text-text-secondary">
+                    <tr>
+                        <th class="px-6 py-4 font-medium">Proyecto</th>
+                        <th class="px-6 py-4 font-medium">Cliente</th>
+                        <th class="px-6 py-4 font-medium">Estado</th>
+                        <th class="px-6 py-4 font-medium">Tarifa</th>
+                        <th class="px-6 py-4 font-medium">Horas contratadas</th>
+                        <th class="px-6 py-4 font-medium"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/[0.06]">
+                    @foreach (var proyecto in proyectos)
+                    {
+                        <tr class="transition-colors duration-200 hover:bg-white/[0.03]">
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-white">@proyecto.Nombre</div>
+                                @if (!string.IsNullOrWhiteSpace(proyecto.Referencia))
+                                {
+                                    <div class="text-xs text-text-secondary">Ref: @proyecto.Referencia</div>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-text-secondary">@proyecto.Cliente?.NombreCompleto</td>
+                            <td class="px-6 py-4"><span class="tag-pill">@EstadoLabel(proyecto.Estado)</span></td>
+                            <td class="px-6 py-4 text-text-secondary">@TarifaLabel(proyecto.Tarifa)</td>
+                            <td class="px-6 py-4 text-text-secondary">@(proyecto.HorasContratadas?.ToString("0.##") ?? "—")</td>
+                            <td class="px-6 py-4 text-right">
+                                <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="() => OpenEditModal(proyecto)" aria-label="Editar proyecto">
+                                    <Icon Name="editing" CssClass="h-4 w-4" />
+                                </button>
+                                <button type="button" class="ml-3 text-text-secondary transition-colors hover:text-danger" @onclick="() => DeleteProyecto(proyecto)" aria-label="Eliminar proyecto">
+                                    <Icon Name="close" CssClass="h-4 w-4" />
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@if (showModal)
+{
+    <ProyectoFormModal Proyecto="editingProyecto" OnSaved="HandleSaved" OnCancelled="CloseModal" />
+}
+
+@code {
+    private List<Proyecto> proyectos = new();
+    private bool loading = true;
+    private string errorMessage;
+    private bool showModal;
+    private Proyecto editingProyecto;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProyectos();
+    }
+
+    private async Task LoadProyectos()
+    {
+        loading = true;
+        errorMessage = null;
+        try
+        {
+            proyectos = await Http.GetFromJsonAsync<List<Proyecto>>("api/proyectos") ?? new List<Proyecto>();
+        }
+        catch (Exception)
+        {
+            errorMessage = "No se pudieron cargar los proyectos.";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private static string EstadoLabel(EstadoProyecto estado) => estado switch
+    {
+        EstadoProyecto.Presupuesto => "Presupuesto",
+        EstadoProyecto.EnCurso => "En curso",
+        EstadoProyecto.EnPausa => "En pausa",
+        EstadoProyecto.Finalizado => "Finalizado",
+        EstadoProyecto.Cancelado => "Cancelado",
+        _ => estado.ToString()
+    };
+
+    private static string TarifaLabel(Tarifa tarifa)
+    {
+        if (tarifa is null) return "—";
+        return tarifa.Modalidad == ModalidadTarifa.PorHora
+            ? $"{tarifa.Valor:0.##}/hora"
+            : $"Paquete {tarifa.Valor:0.##}";
+    }
+
+    private void OpenCreateModal()
+    {
+        editingProyecto = new Proyecto();
+        showModal = true;
+    }
+
+    private void OpenEditModal(Proyecto proyecto)
+    {
+        editingProyecto = new Proyecto
+        {
+            Id = proyecto.Id,
+            Nombre = proyecto.Nombre,
+            Referencia = proyecto.Referencia,
+            ClienteId = proyecto.ClienteId,
+            FechaInicio = proyecto.FechaInicio,
+            Estado = proyecto.Estado,
+            ProductorResponsableId = proyecto.ProductorResponsableId,
+            HorasContratadas = proyecto.HorasContratadas,
+            Tarifa = new Tarifa
+            {
+                Id = proyecto.Tarifa?.Id ?? 0,
+                ProyectoId = proyecto.Id,
+                Modalidad = proyecto.Tarifa?.Modalidad ?? ModalidadTarifa.PorHora,
+                Valor = proyecto.Tarifa?.Valor ?? 0,
+                FechaAcuerdo = proyecto.Tarifa?.FechaAcuerdo ?? DateTime.UtcNow.Date
+            }
+        };
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task HandleSaved()
+    {
+        showModal = false;
+        await LoadProyectos();
+    }
+
+    private async Task DeleteProyecto(Proyecto proyecto)
+    {
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"¿Eliminar el proyecto \"{proyecto.Nombre}\"?");
+        if (!confirmed) return;
+
+        var response = await Http.DeleteAsync($"api/proyectos/{proyecto.Id}");
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadProyectos();
+        }
+    }
+}

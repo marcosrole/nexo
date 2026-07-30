@@ -1,0 +1,72 @@
+@page
+@model Nexo.Server.Areas.Identity.Pages.Account.LoginModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Ingresar — JCB Estudio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0B0F14;
+            color: #fff;
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+        }
+        .card {
+            width: 100%;
+            max-width: 360px;
+            background: rgba(21, 26, 34, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 24px -8px rgba(0, 0, 0, 0.55);
+        }
+        h1 { font-size: 20px; margin: 0 0 4px; }
+        .sub { color: #9CA3AF; font-size: 13px; margin: 0 0 24px; }
+        label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #9CA3AF; margin-bottom: 6px; }
+        input {
+            width: 100%; box-sizing: border-box; border-radius: 10px; border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04); color: #fff; font-size: 14px; padding: 10px 12px; margin-bottom: 16px;
+        }
+        button {
+            width: 100%; border: none; border-radius: 10px; background: #6C5CE7; color: #fff;
+            font-size: 14px; font-weight: 600; padding: 11px; cursor: pointer;
+        }
+        .error { color: #EF4444; font-size: 13px; margin-bottom: 16px; }
+        .field-error { color: #EF4444; font-size: 12px; margin: -12px 0 12px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>JCB Estudio</h1>
+        <p class="sub">Ingresá con tu DNI y contraseña.</p>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <p class="error">@Model.ErrorMessage</p>
+        }
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="error"></div>
+
+            <label asp-for="Input.Dni">DNI</label>
+            <input asp-for="Input.Dni" autofocus autocomplete="username" />
+            <span asp-validation-for="Input.Dni" class="field-error"></span>
+
+            <label asp-for="Input.Password">Contraseña</label>
+            <input asp-for="Input.Password" type="password" autocomplete="current-password" />
+            <span asp-validation-for="Input.Password" class="field-error"></span>
+
+            <button type="submit">Ingresar</button>
+        </form>
+    </div>
+</body>
+</html>

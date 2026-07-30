@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.10" PrivateAssets="all" />
   </ItemGroup>
@@ -12,5 +13,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Shared\Nexo.Shared.csproj" />
   </ItemGroup>
+
+  <!-- Tailwind no tiene soporte JIT en runtime: wwwroot/css/app.css es un archivo generado.
+       Cualquier clase de Tailwind nueva usada en un .razor necesita este paso para tener efecto,
+       así que se corre solo, antes de cada build, en vez de depender de acordarse de hacerlo a mano. -->
+  <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
+    <Exec Command="&quot;$(MSBuildProjectDirectory)\.tailwind-bin\tailwindcss.exe&quot; -i &quot;$(MSBuildProjectDirectory)\Styles\app.tailwind.css&quot; -o &quot;$(MSBuildProjectDirectory)\wwwroot\css\app.css&quot; --minify" />
+  </Target>
 
 </Project>

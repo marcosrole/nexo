@@ -43,6 +43,12 @@
     @apply w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white transition-colors duration-200 placeholder:text-text-secondary/60 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50;
   }
 
+  /* El popup nativo de <option> no hereda el fondo oscuro del <select> en la mayoría
+     de los navegadores — sin esto, queda texto blanco sobre fondo claro del sistema. */
+  .input-field option {
+    @apply bg-surface text-white;
+  }
+
   /* Scroll-reveal primitive, toggled by wwwroot/js/site.js via IntersectionObserver */
   .reveal {
     opacity: 0;

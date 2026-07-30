@@ -1,4 +1,4 @@
-# JCB Estudio — Documento de Requerimientos Funcionales
+y# JCB Estudio — Documento de Requerimientos Funcionales
 
 **Versión:** 1.2
 **Fecha:** 2026-07-29
@@ -57,11 +57,10 @@ Tipo (Persona/Empresa), Nombre, Apellido, Dni, RazonSocial, Cuit, CondiciónFisc
 ### Campos del relevamiento que faltan agregar
 | Campo | Aplica a | Nota |
 |---|---|---|
-| Ciudad | Persona | del relevamiento |
+| Ciudad | Ambos | **Decisión 2026-07-29: obligatorio** (el relevamiento original lo pedía solo para Persona; se extiende a Empresa también). |
 | Instagram / YouTube | Ambos | Fase 2 |
-| Observaciones | Ambos | texto libre |
+| Observaciones | Ambos | texto libre. **Decisión 2026-07-29:** absorbe también las condiciones especiales de cobro (ej: "50% al reservar, resto al finalizar") — se descartó el campo `CondicionesCobro` por ser redundante con este. |
 | Cómo llegó al estudio | Ambos | texto libre o catálogo simple |
-| Condiciones especiales de cobro | Ambos | texto libre (ej: "50% al reservar, resto al finalizar") — por cliente, puede diferir del default |
 | Vínculo a tarifa personalizada | Ambos | ver [Módulo 6](#6-tarifas-y-precios) |
 
 **Supuesto abierto:** el relevamiento menciona "Empresa (si corresponde)" como campo distinto de "Razón social" al hablar de clientes tipo empresa. No quedó claro si son lo mismo o si "Empresa" es un nombre comercial distinto de la razón social legal. **A confirmar con el cliente antes del DER.**
@@ -148,14 +147,24 @@ Se evaluaron dos formas de modelarlo:
 - Se implementa con **ASP.NET Identity** (maneja usuarios, contraseñas, roles y logins externos de forma nativa — no se arma un sistema de login a medida).
 - Los roles `Administrador`, `Operador` y `Cliente` se implementan como **Roles de Identity**, no como un campo enum aparte.
 - Además del login con usuario/contraseña, se permite **iniciar sesión con Gmail** (proveedor externo de Google vía ASP.NET Identity).
-- **Nota (a confirmar):** Google no entrega el DNI de la persona. Para que funcione la vinculación por DNI ([ver más abajo](#cómo-se-vincula-un-usuario-cliente-con-su-cliente-revisión-2026-07-29)), la primera vez que alguien se loguea con Gmail habría que pedirle el DNI en una pantalla intermedia antes de intentar la vinculación. Lo dejo como supuesto de flujo, no como algo que hayas confirmado explícitamente.
+- Google no entrega el DNI de la persona — resuelto en el flujo de registro de abajo (revisión 2026-07-29): se pide como paso aparte, tanto si se registra con Google como si se registra manualmente.
+- **Cambio de contraseña:** todo usuario (Administrador, Operador o Cliente) puede cambiar su contraseña. Es una funcionalidad estándar de ASP.NET Identity, no específica de ningún rol.
 
-### Cómo se vincula un Usuario-Cliente con su Cliente (revisión 2026-07-29)
+### Cómo se vincula un Usuario-Cliente con su Cliente (revisión 2026-07-29, precisado el mismo día)
 
-1. El `Cliente` lo da de alta el **Administrador** (staff), como ya funciona hoy en el CRUD de Clientes — el cliente no se autoregistra como cliente comercial.
-2. Cuando esa persona inicia sesión como Cliente, el sistema busca coincidencia por **DNI** contra los clientes ya cargados.
-3. **Si coincide:** se vincula el `Usuario` a ese `Cliente` (se completa `Usuario.ClienteId`) y accede a su portal.
-4. **Si no coincide:** no se vincula nada, y se le muestra un aviso amigable (no un error técnico), del estilo: *"Todavía no encontramos tu registro en JCB Estudio. Contactate con nosotros para darte de alta."*
+**Precondición obligatoria:** para poder crear su usuario, la persona **ya tiene que estar dada de alta como `Cliente`** por el Administrador (staff). No hay autoregistro de clientes comerciales — solo autoregistro de la *cuenta de acceso* de un cliente que ya existe.
+
+Flujo de registro (dos caminos posibles, mismo resultado):
+
+1. **Registro manual:** el cliente completa Email, DNI y contraseña.
+2. **Registro con Google:** el cliente inicia sesión con Gmail; como Google no entrega el DNI, se le pide en un paso adicional dentro del mismo registro (no en logins posteriores).
+
+En ambos casos, al registrarse el sistema busca coincidencia por **DNI** contra los clientes ya cargados:
+
+- **Si coincide:** se vincula el `Usuario` a ese `Cliente` (se completa `Usuario.ClienteId`) y accede a su portal.
+- **Si no coincide:** no se crea el vínculo, y se le muestra un aviso amigable (no un error técnico), del estilo: *"Todavía no encontramos tu registro en JCB Estudio. Contactate con nosotros para darte de alta."*
+
+La verificación por DNI ocurre **una vez, al registrarse** — no en cada login posterior (una vez vinculada la cuenta, queda vinculada).
 
 **Pendiente:** falta terminar de definir qué contenido exacto tiene la sección "Mi perfil" del cliente una vez vinculado (quedó cortado en la conversación) — no se modela todavía hasta tener esa lista completa.
 

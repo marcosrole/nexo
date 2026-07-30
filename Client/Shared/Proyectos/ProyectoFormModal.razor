@@ -1,0 +1,176 @@
+@namespace Nexo.Client.Shared.Proyectos
+@using System.Collections.Generic
+@using System.Linq
+@inject HttpClient Http
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-12" @onclick="OnCancelled">
+    <div class="surface-card flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[80vh]" @onclick:stopPropagation="true">
+        <div class="flex shrink-0 items-center justify-between border-b border-white/[0.06] p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-white">@(IsNew ? "Nuevo proyecto" : "Editar proyecto")</h2>
+            <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="OnCancelled" aria-label="Cerrar">
+                <Icon Name="close" CssClass="h-4 w-4" />
+            </button>
+        </div>
+
+        <div class="overflow-y-auto p-4 sm:p-6">
+        <EditForm Model="Proyecto" OnValidSubmit="Submit">
+            <DataAnnotationsValidator />
+
+            <p class="mt-4 text-xs text-text-secondary"><span class="text-danger">*</span> Campo obligatorio</p>
+
+            <div class="mt-4 space-y-4">
+                <div>
+                    <label class="field-label">Cliente <span class="text-danger">*</span></label>
+                    <InputSelect class="input-field" @bind-Value="Proyecto.ClienteId">
+                        <option value="0">Seleccionar cliente...</option>
+                        @foreach (var cliente in clientes)
+                        {
+                            <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Proyecto.ClienteId" class="mt-1 text-xs text-danger" />
+                </div>
+
+                <div>
+                    <label class="field-label">Nombre del proyecto <span class="text-danger">*</span></label>
+                    <InputText class="input-field" maxlength="150" @bind-Value="Proyecto.Nombre" />
+                    <ValidationMessage For="() => Proyecto.Nombre" class="mt-1 text-xs text-danger" />
+                </div>
+
+                <div>
+                    <label class="field-label">Referencia (opcional)</label>
+                    <InputText class="input-field" maxlength="60" placeholder="Ej: Single 2026" @bind-Value="Proyecto.Referencia" />
+                    <p class="mt-1 text-xs text-text-secondary">Para distinguir proyectos del mismo cliente — no reemplaza el nombre.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Fecha de inicio <span class="text-danger">*</span></label>
+                        <InputDate class="input-field" @bind-Value="Proyecto.FechaInicio" />
+                        <ValidationMessage For="() => Proyecto.FechaInicio" class="mt-1 text-xs text-danger" />
+                    </div>
+                    <div>
+                        <label class="field-label">Estado <span class="text-danger">*</span></label>
+                        <InputSelect class="input-field" @bind-Value="Proyecto.Estado">
+                            <option value="@EstadoProyecto.Presupuesto">Presupuesto</option>
+                            <option value="@EstadoProyecto.EnCurso">En curso</option>
+                            <option value="@EstadoProyecto.EnPausa">En pausa</option>
+                            <option value="@EstadoProyecto.Finalizado">Finalizado</option>
+                            <option value="@EstadoProyecto.Cancelado">Cancelado</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Productor responsable <span class="text-danger">*</span></label>
+                        <InputSelect class="input-field" @bind-Value="Proyecto.ProductorResponsableId">
+                            <option value="0">Seleccionar...</option>
+                            @foreach (var usuario in staff)
+                            {
+                                <option value="@usuario.Id">@usuario.NombreCompleto</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Proyecto.ProductorResponsableId" class="mt-1 text-xs text-danger" />
+                        @if (!staff.Any())
+                        {
+                            <p class="mt-1 text-xs text-warning">Todavía no hay usuarios de staff cargados.</p>
+                        }
+                    </div>
+                    <div>
+                        <label class="field-label">Horas contratadas (opcional)</label>
+                        <InputNumber class="input-field" @bind-Value="Proyecto.HorasContratadas" />
+                        <p class="mt-1 text-xs text-text-secondary">Vacío = no se pactó bolsa de horas.</p>
+                    </div>
+                </div>
+
+                <hr class="border-white/[0.06]">
+
+                <div>
+                    <h3 class="text-sm font-semibold text-white">Tarifa acordada</h3>
+                    <p class="mt-1 text-xs text-text-secondary">Se carga a mano — no hay módulo de Presupuestos en el MVP.</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Modalidad <span class="text-danger">*</span></label>
+                        <InputSelect class="input-field" @bind-Value="Proyecto.Tarifa.Modalidad">
+                            <option value="@ModalidadTarifa.PorHora">Por hora</option>
+                            <option value="@ModalidadTarifa.PorPaquete">Por paquete</option>
+                        </InputSelect>
+                    </div>
+                    <div>
+                        <label class="field-label">Valor <span class="text-danger">*</span></label>
+                        <InputNumber class="input-field" @bind-Value="Proyecto.Tarifa.Valor" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">Fecha de acuerdo <span class="text-danger">*</span></label>
+                    <InputDate class="input-field" @bind-Value="Proyecto.Tarifa.FechaAcuerdo" />
+                    <p class="mt-1 text-xs text-text-secondary">Dispara el aviso de vencimiento a los 3 meses.</p>
+                </div>
+            </div>
+
+            @if (errorMessage is not null)
+            {
+                <p class="mt-4 text-sm text-danger">@errorMessage</p>
+            }
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" class="btn-secondary" @onclick="OnCancelled">Cancelar</button>
+                <button type="submit" class="btn-primary" disabled="@saving">@(saving ? "Guardando..." : "Guardar")</button>
+            </div>
+        </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Proyecto Proyecto { get; set; } = default!;
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnCancelled { get; set; }
+
+    private List<Cliente> clientes = new();
+    private List<UsuarioResumen> staff = new();
+    private bool saving;
+    private string errorMessage;
+
+    private bool IsNew => Proyecto.Id == 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clientes = await Http.GetFromJsonAsync<List<Cliente>>("api/clientes") ?? new List<Cliente>();
+        staff = await Http.GetFromJsonAsync<List<UsuarioResumen>>("api/usuarios/staff") ?? new List<UsuarioResumen>();
+    }
+
+    private async Task Submit()
+    {
+        saving = true;
+        errorMessage = null;
+
+        try
+        {
+            var response = IsNew
+                ? await Http.PostAsJsonAsync("api/proyectos", Proyecto)
+                : await Http.PutAsJsonAsync($"api/proyectos/{Proyecto.Id}", Proyecto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await OnSaved.InvokeAsync();
+            }
+            else
+            {
+                errorMessage = "No se pudo guardar el proyecto. Revisá los datos ingresados.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error de conexión al guardar.";
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

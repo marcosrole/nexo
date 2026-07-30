@@ -46,6 +46,15 @@ namespace Nexo.Shared.Models
         [StringLength(100)]
         public string Direccion { get; set; }
 
+        [StringLength(60)]
+        public string Ciudad { get; set; }
+
+        [StringLength(200)]
+        public string ComoLlego { get; set; }
+
+        [StringLength(500)]
+        public string Observaciones { get; set; }
+
         public DateTime FechaAlta { get; set; } = DateTime.UtcNow;
 
         public string NombreCompleto =>
@@ -87,6 +96,9 @@ namespace Nexo.Shared.Models
 
             if (string.IsNullOrWhiteSpace(Direccion))
                 yield return new ValidationResult("La dirección es obligatoria.", new[] { nameof(Direccion) });
+
+            if (string.IsNullOrWhiteSpace(Ciudad))
+                yield return new ValidationResult("La ciudad es obligatoria.", new[] { nameof(Ciudad) });
         }
     }
 }

@@ -1,10 +1,20 @@
-﻿<Router AppAssembly="@typeof(Program).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MarketingLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="@typeof(MarketingLayout)">
-            <p>Sorry, there's nothing at this address.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(Program).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MarketingLayout)">
+                <NotAuthorized>
+                    <section class="mx-auto max-w-[1400px] px-6 py-24 text-center lg:px-10">
+                        <p class="text-sm font-medium uppercase tracking-[0.14em] text-text-secondary">Acceso restringido</p>
+                        <h1 class="mt-3 text-3xl font-bold tracking-tight text-white">No tenés permiso para ver esta página</h1>
+                        <a href="/Identity/Account/Login?returnUrl=%2Fdashboard" class="btn-primary mt-6 inline-flex">Ingresar con otra cuenta</a>
+                    </section>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MarketingLayout)">
+                <p>Sorry, there's nothing at this address.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

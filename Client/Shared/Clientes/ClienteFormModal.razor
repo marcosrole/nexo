@@ -1,15 +1,16 @@
 @namespace Nexo.Client.Shared.Clientes
 @inject HttpClient Http
 
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm" @onclick="OnCancelled">
-    <div class="surface-card w-full max-w-lg p-6" @onclick:stopPropagation="true">
-        <div class="flex items-center justify-between">
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-12" @onclick="OnCancelled">
+    <div class="surface-card flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[80vh]" @onclick:stopPropagation="true">
+        <div class="flex shrink-0 items-center justify-between border-b border-white/[0.06] p-4 sm:p-6">
             <h2 class="text-lg font-semibold text-white">@(IsNew ? "Nuevo cliente" : "Editar cliente")</h2>
             <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="OnCancelled" aria-label="Cerrar">
                 <Icon Name="close" CssClass="h-4 w-4" />
             </button>
         </div>
 
+        <div class="overflow-y-auto p-4 sm:p-6">
         <EditForm Model="Cliente" OnValidSubmit="Submit">
             <DataAnnotationsValidator />
 
@@ -18,66 +19,86 @@
                 <button type="button" class="@TipoButtonClass(TipoCliente.Empresa)" @onclick="() => SetTipo(TipoCliente.Empresa)">Empresa</button>
             </div>
 
+            <p class="mt-4 text-xs text-text-secondary"><span class="text-danger">*</span> Campo obligatorio</p>
+
             <div class="mt-4 space-y-4">
                 @if (Cliente.Tipo == TipoCliente.Persona)
                 {
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                         <div>
-                            <label class="field-label">Nombre</label>
+                            <label class="field-label">Nombre <span class="text-danger">*</span></label>
                             <InputText class="input-field" maxlength="50" @bind-Value="Cliente.Nombre" />
                             <ValidationMessage For="() => Cliente.Nombre" class="mt-1 text-xs text-danger" />
                         </div>
                         <div>
-                            <label class="field-label">Apellido</label>
+                            <label class="field-label">Apellido <span class="text-danger">*</span></label>
                             <InputText class="input-field" maxlength="50" @bind-Value="Cliente.Apellido" />
                             <ValidationMessage For="() => Cliente.Apellido" class="mt-1 text-xs text-danger" />
                         </div>
-                    </div>
-                    <div>
-                        <label class="field-label">DNI</label>
-                        <InputText class="input-field" maxlength="20" @bind-Value="Cliente.Dni" />
-                        <ValidationMessage For="() => Cliente.Dni" class="mt-1 text-xs text-danger" />
+                        <div>
+                            <label class="field-label">DNI <span class="text-danger">*</span></label>
+                            <InputText class="input-field" maxlength="20" @bind-Value="Cliente.Dni" />
+                            <ValidationMessage For="() => Cliente.Dni" class="mt-1 text-xs text-danger" />
+                        </div>
                     </div>
                 }
                 else
                 {
                     <div>
-                        <label class="field-label">Razón social</label>
+                        <label class="field-label">Razón social <span class="text-danger">*</span></label>
                         <InputText class="input-field" maxlength="100" @bind-Value="Cliente.RazonSocial" />
                         <ValidationMessage For="() => Cliente.RazonSocial" class="mt-1 text-xs text-danger" />
                     </div>
                 }
 
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div>
-                        <label class="field-label">CUIT</label>
+                        <label class="field-label">CUIT <span class="text-danger">*</span></label>
                         <InputText class="input-field" placeholder="xx-xxxxxxxx-x" maxlength="13" @bind-Value="Cliente.Cuit" />
                         <ValidationMessage For="() => Cliente.Cuit" class="mt-1 text-xs text-danger" />
                     </div>
                     <div>
-                        <label class="field-label">Condición fiscal</label>
+                        <label class="field-label">Condición fiscal <span class="text-danger">*</span></label>
                         <InputText class="input-field" maxlength="50" @bind-Value="Cliente.CondicionFiscal" />
                         <ValidationMessage For="() => Cliente.CondicionFiscal" class="mt-1 text-xs text-danger" />
+                    </div>
+                    <div>
+                        <label class="field-label">Teléfono <span class="text-danger">*</span></label>
+                        <InputText class="input-field" maxlength="40" @bind-Value="Cliente.Telefono" />
+                        <ValidationMessage For="() => Cliente.Telefono" class="mt-1 text-xs text-danger" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Email <span class="text-danger">*</span></label>
+                        <InputText class="input-field" @bind-Value="Cliente.Email" />
+                        <ValidationMessage For="() => Cliente.Email" class="mt-1 text-xs text-danger" />
+                    </div>
+                    <div>
+                        <label class="field-label">Dirección <span class="text-danger">*</span></label>
+                        <InputText class="input-field" maxlength="100" @bind-Value="Cliente.Direccion" />
+                        <ValidationMessage For="() => Cliente.Direccion" class="mt-1 text-xs text-danger" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Ciudad <span class="text-danger">*</span></label>
+                        <InputText class="input-field" maxlength="60" @bind-Value="Cliente.Ciudad" />
+                        <ValidationMessage For="() => Cliente.Ciudad" class="mt-1 text-xs text-danger" />
+                    </div>
+                    <div>
+                        <label class="field-label">Cómo llegó al estudio</label>
+                        <InputText class="input-field" maxlength="200" @bind-Value="Cliente.ComoLlego" />
+                        <ValidationMessage For="() => Cliente.ComoLlego" class="mt-1 text-xs text-danger" />
                     </div>
                 </div>
 
                 <div>
-                    <label class="field-label">Email</label>
-                    <InputText class="input-field" @bind-Value="Cliente.Email" />
-                    <ValidationMessage For="() => Cliente.Email" class="mt-1 text-xs text-danger" />
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="field-label">Teléfono</label>
-                        <InputText class="input-field" maxlength="40" @bind-Value="Cliente.Telefono" />
-                        <ValidationMessage For="() => Cliente.Telefono" class="mt-1 text-xs text-danger" />
-                    </div>
-                    <div>
-                        <label class="field-label">Dirección</label>
-                        <InputText class="input-field" maxlength="100" @bind-Value="Cliente.Direccion" />
-                        <ValidationMessage For="() => Cliente.Direccion" class="mt-1 text-xs text-danger" />
-                    </div>
+                    <label class="field-label">Observaciones</label>
+                    <InputTextArea class="input-field" rows="2" maxlength="500" placeholder="Ej: condiciones especiales de cobro, cómo llegó, o cualquier otra nota" @bind-Value="Cliente.Observaciones" />
+                    <ValidationMessage For="() => Cliente.Observaciones" class="mt-1 text-xs text-danger" />
                 </div>
             </div>
 
@@ -91,6 +112,7 @@
                 <button type="submit" class="btn-primary" disabled="@saving">@(saving ? "Guardando..." : "Guardar")</button>
             </div>
         </EditForm>
+        </div>
     </div>
 </div>
 
