@@ -16,9 +16,17 @@
 
   <!-- Tailwind no tiene soporte JIT en runtime: wwwroot/css/app.css es un archivo generado.
        Cualquier clase de Tailwind nueva usada en un .razor necesita este paso para tener efecto,
-       así que se corre solo, antes de cada build, en vez de depender de acordarse de hacerlo a mano. -->
+       así que se corre solo, antes de cada build, en vez de depender de acordarse de hacerlo a mano.
+
+       En Windows (dev local) se usa el binario standalone en .tailwind-bin (no requiere Node.js,
+       por eso está en .gitignore: es un .exe pesado que no hace falta versionar).
+       En Linux (el runner de GitHub Actions) no existe ese .exe, así que se usa npx con Node.js,
+       que ya viene preinstalado en las imágenes ubuntu-latest. -->
   <Target Name="BuildTailwindCss" BeforeTargets="BeforeBuild">
-    <Exec Command="&quot;$(MSBuildProjectDirectory)\.tailwind-bin\tailwindcss.exe&quot; -i &quot;$(MSBuildProjectDirectory)\Styles\app.tailwind.css&quot; -o &quot;$(MSBuildProjectDirectory)\wwwroot\css\app.css&quot; --minify" />
+    <Exec Condition="'$(OS)' == 'Windows_NT'"
+          Command="&quot;$(MSBuildProjectDirectory)\.tailwind-bin\tailwindcss.exe&quot; -i &quot;$(MSBuildProjectDirectory)\Styles\app.tailwind.css&quot; -o &quot;$(MSBuildProjectDirectory)\wwwroot\css\app.css&quot; --minify" />
+    <Exec Condition="'$(OS)' != 'Windows_NT'"
+          Command="npx --yes tailwindcss@3.4.14 -i &quot;$(MSBuildProjectDirectory)/Styles/app.tailwind.css&quot; -o &quot;$(MSBuildProjectDirectory)/wwwroot/css/app.css&quot; --minify" />
   </Target>
 
 </Project>
