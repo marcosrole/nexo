@@ -1,7 +1,7 @@
 # JCB Estudio — Modelo de Datos (DER)
 
-**Versión:** 1.2
-**Fecha:** 2026-07-29
+**Versión:** 1.3
+**Fecha:** 2026-07-31
 **Depende de:** [requerimientos-funcionales.md](requerimientos-funcionales.md) — ver también [roadmap.md](roadmap.md)
 **Contrastado contra:** esquema actual en `Server/Data/Migrations` (única entidad migrada hoy: `Cliente`).
 
@@ -11,13 +11,15 @@ Este documento no fue validado con el cliente (decisión del 2026-07-29 de avanz
 
 **Revisión 2026-07-29 (achique del MVP):** `Presupuesto` y el módulo de Reportes con exportación quedan para Fase 2. `Tarifa` se carga a mano en el MVP y suma `FechaAcuerdo` propio para no perder la regla de vigencia de 3 meses. Ver sección 1ter.
 
+**Revisión 2026-07-31 (reglas de transición de Estado):** se define cómo pasa un proyecto de un estado a otro (antes era un dropdown libre sin reglas) y se elimina `EnPausa` del enum, que nunca tuvo una regla ni una confirmación del cliente. Ver sección 1quater.
+
 ---
 
 ## 1. Resolución de los supuestos abiertos (Entregable 1, sección 13)
 
 | Supuesto abierto | Resolución de diseño | Motivo |
 |---|---|---|
-| Estado `EnPausa` sin confirmar | Se mantiene como estado válido del enum `EstadoProyecto`. | Agregar un estado de más no rompe nada; sacarlo después es más barato que no tenerlo. |
+| Estado `EnPausa` sin confirmar | **Superado, ver sección 1quater (2026-07-31): se eliminó del enum.** | — |
 | "Empresa" vs "Razón Social" | Se unifican en un solo campo (`RazonSocial`, ya existente). No se agrega columna "Empresa" separada. | Evita ambigüedad de cuál es la fuente de verdad; si el cliente aclara que son cosas distintas, se agrega en una migración incremental. |
 | Cómo diferenciar proyectos del mismo cliente con igual nombre | Se agrega `Referencia` (texto corto, opcional) al proyecto — ej. "Grupo A", "Single 2026". No reemplaza el nombre, lo complementa. | El cliente dijo que el nombre = nombre del cliente; no dijo que no pudiera haber un campo adicional para distinguir. |
 
@@ -46,6 +48,21 @@ Este documento no fue validado con el cliente (decisión del 2026-07-29 de avanz
 | "El presupuesto todavía no tome valor, será hablado, sin un sistema" | `Presupuesto` pasa a **Fase 2** — no se migra ni se construye en el MVP. `Tarifa` se carga a mano al crear el proyecto, y suma su propio campo `FechaAcuerdo` (antes vivía solo en `Presupuesto`) para no perder la regla de vigencia de 3 meses. | Simplifica el MVP: la parte más compleja del modelo (múltiples cotizaciones, `Aceptado`, el puente con Tarifa) se pospone hasta que haga falta de verdad. |
 | "La reportería tampoco quiero que se haga en esta etapa; la info debe estar en pantalla, sin exportar a PDF" | No hay módulo de Reportes en el MVP. Las cifras (horas del mes, por cliente, facturación) se muestran directamente en las pantallas de Proyecto/Cliente. El módulo formal con filtros y exportación a PDF queda en Fase 2. | Evita construir un motor de reportes/exportación antes de validar que el resto del sistema funciona en el día a día. |
 | "El campo Condiciones especiales de cobro es redundante con Observaciones" | Se elimina `Cliente.CondicionesCobro`. Las condiciones especiales de cobro, si existen, se anotan como texto libre dentro de `Observaciones`. | Ambos eran campos de texto libre sin estructura — mantenerlos separados no aportaba nada que Observaciones no cubriera ya. |
+
+---
+
+## 1quater. Reglas de transición de `EstadoProyecto` (2026-07-31)
+
+`Proyecto.Estado` deja de ser un campo libre editable en el alta/edición. Se elimina `EnPausa` del enum (quedaba en la sección 1 como supuesto sin confirmar y nunca se le asignó una regla). El enum final es `Presupuesto`, `EnCurso`, `Finalizado`, `Cancelado`, con esta lógica:
+
+| Estado | Cómo se llega | Quién lo controla |
+|---|---|---|
+| `Presupuesto` | Estado inicial de todo proyecto nuevo (todavía sin ninguna `Sesion` cargada). | Automático (servidor). |
+| `EnCurso` | Se activa solo al guardarse la primera `Sesion` del proyecto, si el proyecto estaba en `Presupuesto`. | Automático (servidor, en `SesionesController.Post`). |
+| `Finalizado` | Acción explícita "Finalizar proyecto" desde el listado de Proyectos. | Manual (staff). |
+| `Cancelado` | Acción explícita "Cancelar proyecto" desde el listado de Proyectos. | Manual (staff). |
+
+Regla de precedencia: los estados manuales (`Finalizado`, `Cancelado`) siempre le ganan al cálculo automático — cargar una sesión nueva en un proyecto ya `Finalizado`/`Cancelado` no lo revierte a `EnCurso`. No hay acción para "reabrir" un proyecto finalizado/cancelado en el MVP; si hace falta, se agrega en Fase 2.
 
 ---
 
@@ -111,7 +128,7 @@ erDiagram
         string Referencia "nuevo, opcional, distingue proyectos del mismo cliente"
         int ClienteId FK
         date FechaInicio
-        enum Estado "Presupuesto/EnCurso/EnPausa/Finalizado/Cancelado"
+        enum Estado "Presupuesto/EnCurso/Finalizado/Cancelado — ver 1quater"
         int ProductorResponsableId FK
         decimal HorasContratadas "nullable"
         int CreadoPorId FK

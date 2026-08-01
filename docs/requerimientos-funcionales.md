@@ -1,8 +1,8 @@
 y# JCB Estudio — Documento de Requerimientos Funcionales
 
-**Versión:** 1.2
-**Fecha:** 2026-07-29
-**Origen:** Relevamiento con el cliente (JCB Estudio - Requerimientos.pdf) + decisiones tomadas el 2026-07-29 + revisión del análisis (Sesión, Usuarios, Presupuesto↔Tarifa, ASP.NET Identity) + achique del MVP, todo el mismo día.
+**Versión:** 1.3
+**Fecha:** 2026-07-31
+**Origen:** Relevamiento con el cliente (JCB Estudio - Requerimientos.pdf) + decisiones tomadas el 2026-07-29 + revisión del análisis (Sesión, Usuarios, Presupuesto↔Tarifa, ASP.NET Identity) + achique del MVP, todo el mismo día + reglas de transición de Estado de Proyecto (2026-07-31).
 **Estado:** Base para iniciar diseño de datos y wireframes. Ver [roadmap.md](roadmap.md) para el orden de entregables de construcción. Contiene supuestos marcados explícitamente que deben confirmarse antes de cerrar el alcance definitivo.
 
 ---
@@ -78,13 +78,18 @@ Tipo (Persona/Empresa), Nombre, Apellido, Dni, RazonSocial, Cuit, CondiciónFisc
 | Cliente | Sí | Un proyecto pertenece a un solo cliente. |
 | FechaInicio | Sí | — |
 | FechaFinEstimada | No | El cliente indicó que no se usa. |
-| Estado | Sí | Enum: `Presupuesto`, `EnCurso`, `EnPausa`, `Finalizado`, `Cancelado`. **`EnPausa` es un supuesto no confirmado explícitamente por el cliente en el relevamiento — validar.** |
+| Estado | Sí (calculado/manual, no editable libremente) | Enum: `Presupuesto`, `EnCurso`, `Finalizado`, `Cancelado`. Ver regla de transición abajo. |
 | ProductorResponsable | Sí | Referencia a un Usuario (Alfredo, Lucía, etc.) |
 | HorasContratadas | No (nullable) | **Decisión 2026-07-29: por defecto se asume que el proyecto NO tiene una bolsa de horas pactada.** El campo existe pero puede quedar vacío. Cuando tiene valor, el sistema calcula horas disponibles (ver [Módulo 6](#6-tarifas-y-precios)). |
 
 ### Reglas de negocio
 - **Revisión 2026-07-29 (achique del MVP):** el proyecto ya no tiene un módulo de Presupuestos en el MVP. La tarifa se negocia de palabra y se carga directamente en `Tarifa` (ver [Módulo 6](#6-tarifas-y-precios)). El módulo formal de Presupuestos (varias cotizaciones, `Aceptado`, vínculo automático con Tarifa) queda documentado en el [Módulo 5](#5-módulo-presupuestos-fase-2) para cuando se retome en Fase 2.
 - El valor de la hora se fija al acordar el proyecto y no cambia dentro del mismo proyecto.
+- **Decisión 2026-07-31 (transición de Estado):** el estado deja de ser un campo libre. Se elimina `EnPausa` del enum (nunca fue confirmado por el cliente, ver antigua sección 13). Reglas:
+  - **Presupuesto**: estado inicial de todo proyecto nuevo. Automático.
+  - **En curso**: se activa solo, en el servidor, al cargarse la primera `Sesion` del proyecto (si el proyecto estaba en `Presupuesto`).
+  - **Finalizado** / **Cancelado**: se marcan a mano mediante una acción explícita ("Finalizar" / "Cancelar" proyecto) desde el listado de Proyectos — no son parte del alta/edición normal del proyecto ni se recalculan solos.
+  - Una vez `Finalizado` o `Cancelado`, cargar una nueva sesión NO revierte el estado a `En curso` (el estado manual siempre gana sobre el cálculo automático).
 
 ---
 
@@ -258,10 +263,10 @@ No se registra equipamiento utilizado (descartado explícitamente por el cliente
 | 16 | ¿Para autenticación? | ASP.NET Identity, con roles de Identity y login externo con Gmail. |
 | 17 | Achicar el MVP: ¿el módulo de Presupuestos entra? | No. Queda para Fase 2. En el MVP la tarifa se negocia de palabra y se carga directo en `Tarifa` (con su propia `FechaAcuerdo`). |
 | 18 | Achicar el MVP: ¿entra el módulo de Reportes? | No como módulo con exportación. La información (horas por mes, por cliente, facturación) se ve en pantalla en el MVP; el módulo formal con PDF queda para Fase 2. |
+| 19 | ¿Cómo se define el Estado de un Proyecto? | `Presupuesto` (sin sesiones, automático) → `En curso` (automático, al cargar la primera sesión) → `Finalizado` / `Cancelado` (manual, acción explícita, le gana al cálculo automático). Se elimina `EnPausa` del enum. |
 
 ## 13. Supuestos aún sin confirmar (pendientes de validar con el cliente)
 
-- Estado de proyecto `En pausa`: no tuvo un "sí" explícito en el relevamiento original (a diferencia de los demás estados). Asumido como válido por lógica de negocio.
 - Campo "Empresa" vs "Razón social" en clientes tipo empresa: posible redundancia o campos distintos, sin aclarar.
 - Cómo se identifica un proyecto cuando un mismo cliente tiene varios proyectos simultáneos con el mismo nombre (el cliente dijo que el nombre del proyecto = nombre del cliente).
 - Nivel de detalle exacto que verá el rol Cliente en el portal (asumido como resumen: horas usadas/disponibles y estado — "eso lo decidimos más adelante", palabras del cliente).

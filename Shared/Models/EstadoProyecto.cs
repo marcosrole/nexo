@@ -4,7 +4,6 @@ namespace Nexo.Shared.Models
     {
         Presupuesto,
         EnCurso,
-        EnPausa,
         Finalizado,
         Cancelado
     }

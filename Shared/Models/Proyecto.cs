@@ -23,7 +23,7 @@ namespace Nexo.Shared.Models
         public DateTime FechaInicio { get; set; } = DateTime.UtcNow.Date;
 
         [Required]
-        public EstadoProyecto Estado { get; set; } = EstadoProyecto.EnCurso;
+        public EstadoProyecto Estado { get; set; } = EstadoProyecto.Presupuesto;
 
         public int ProductorResponsableId { get; set; }
 
@@ -31,6 +31,8 @@ namespace Nexo.Shared.Models
         public decimal? HorasContratadas { get; set; }
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+        public bool TieneSesionAbierta { get; set; }
 
         [Required]
         public Tarifa Tarifa { get; set; } = new Tarifa();

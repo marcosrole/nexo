@@ -43,23 +43,20 @@
                     <p class="mt-1 text-xs text-text-secondary">Para distinguir proyectos del mismo cliente — no reemplaza el nombre.</p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label class="field-label">Fecha de inicio <span class="text-danger">*</span></label>
-                        <InputDate class="input-field" @bind-Value="Proyecto.FechaInicio" />
-                        <ValidationMessage For="() => Proyecto.FechaInicio" class="mt-1 text-xs text-danger" />
-                    </div>
-                    <div>
-                        <label class="field-label">Estado <span class="text-danger">*</span></label>
-                        <InputSelect class="input-field" @bind-Value="Proyecto.Estado">
-                            <option value="@EstadoProyecto.Presupuesto">Presupuesto</option>
-                            <option value="@EstadoProyecto.EnCurso">En curso</option>
-                            <option value="@EstadoProyecto.EnPausa">En pausa</option>
-                            <option value="@EstadoProyecto.Finalizado">Finalizado</option>
-                            <option value="@EstadoProyecto.Cancelado">Cancelado</option>
-                        </InputSelect>
-                    </div>
+                <div>
+                    <label class="field-label">Fecha de inicio <span class="text-danger">*</span></label>
+                    <InputDate class="input-field" @bind-Value="Proyecto.FechaInicio" />
+                    <ValidationMessage For="() => Proyecto.FechaInicio" class="mt-1 text-xs text-danger" />
                 </div>
+
+                @if (!IsNew)
+                {
+                    <div>
+                        <label class="field-label">Estado</label>
+                        <p class="mt-1"><span class="tag-pill">@EstadoLabel(Proyecto.Estado)</span></p>
+                        <p class="mt-1 text-xs text-text-secondary">Se calcula solo (Presupuesto → En curso al cargar la primera sesión). Para Finalizar o Cancelar, usá las acciones en el listado.</p>
+                    </div>
+                }
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
@@ -137,6 +134,15 @@
     private string errorMessage;
 
     private bool IsNew => Proyecto.Id == 0;
+
+    private static string EstadoLabel(EstadoProyecto estado) => estado switch
+    {
+        EstadoProyecto.Presupuesto => "Presupuesto",
+        EstadoProyecto.EnCurso => "En curso",
+        EstadoProyecto.Finalizado => "Finalizado",
+        EstadoProyecto.Cancelado => "Cancelado",
+        _ => estado.ToString()
+    };
 
     protected override async Task OnInitializedAsync()
     {

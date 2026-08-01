@@ -1,0 +1,232 @@
+@namespace Nexo.Client.Shared.Sesiones
+@using System.Collections.Generic
+@using System.Linq
+@inject HttpClient Http
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-12" @onclick="OnCancelled">
+    <div class="surface-card flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[80vh]" @onclick:stopPropagation="true">
+        <div class="flex shrink-0 items-center justify-between border-b border-white/[0.06] p-4 sm:p-6">
+            <h2 class="text-lg font-semibold text-white">@(IsNew ? "Nueva sesión" : "Editar sesión")</h2>
+            <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="OnCancelled" aria-label="Cerrar">
+                <Icon Name="close" CssClass="h-4 w-4" />
+            </button>
+        </div>
+
+        <div class="overflow-y-auto p-4 sm:p-6">
+        <EditForm Model="Sesion" OnValidSubmit="Submit">
+            <DataAnnotationsValidator />
+
+            <p class="text-xs text-text-secondary"><span class="text-danger">*</span> Campo obligatorio</p>
+
+            <div class="mt-4 space-y-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Fecha y hora de inicio <span class="text-danger">*</span></label>
+                        <input type="datetime-local" class="input-field" @bind="Sesion.FechaInicio" @bind:format="yyyy-MM-ddTHH:mm" @bind:event="oninput" @bind:after="RecalcularHoras" />
+                        <ValidationMessage For="() => Sesion.FechaInicio" class="mt-1 text-xs text-danger" />
+                    </div>
+                    <div>
+                        <label class="field-label">Fecha y hora de fin</label>
+                        <input type="datetime-local" class="input-field" @bind="Sesion.FechaFin" @bind:format="yyyy-MM-ddTHH:mm" @bind:event="oninput" @bind:after="RecalcularHoras" />
+                        <p class="mt-1 text-xs text-text-secondary">Vacío = sesión abierta (se cierra otro día).</p>
+                        <ValidationMessage For="() => Sesion.FechaFin" class="mt-1 text-xs text-danger" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="field-label">Responsable (operador de turno) <span class="text-danger">*</span></label>
+                        <InputSelect class="input-field" @bind-Value="Sesion.ResponsableId">
+                            <option value="0">Seleccionar...</option>
+                            @foreach (var usuario in staff)
+                            {
+                                <option value="@usuario.Id">@usuario.NombreCompleto</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Sesion.ResponsableId" class="mt-1 text-xs text-danger" />
+                    </div>
+                    <div>
+                        <label class="field-label">Cantidad de horas</label>
+                        <InputNumber class="input-field" @bind-Value="Sesion.CantidadHoras" />
+                        <p class="mt-1 text-xs text-text-secondary">Se autocompleta con la diferencia entre inicio y fin (redondeada hacia arriba) — se puede ajustar a mano.</p>
+                        <ValidationMessage For="() => Sesion.CantidadHoras" class="mt-1 text-xs text-danger" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">Estudio / Locación <span class="text-danger">*</span></label>
+                    <InputSelect class="input-field" @bind-Value="Sesion.EstudioId">
+                        <option value="0">Seleccionar...</option>
+                        @foreach (var estudio in estudios)
+                        {
+                            <option value="@estudio.Id">@estudio.Nombre@(estudio.EsLocacionExterna ? " (externa)" : "")</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Sesion.EstudioId" class="mt-1 text-xs text-danger" />
+
+                    @if (!mostrarNuevoEstudio)
+                    {
+                        <button type="button" class="mt-2 text-xs font-medium text-accent hover:underline" @onclick="() => mostrarNuevoEstudio = true">
+                            + Agregar nueva locación
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="mt-3 grid grid-cols-1 gap-3 rounded-xl border border-white/10 p-3 sm:grid-cols-[1fr_auto_auto]">
+                            <input class="input-field" placeholder="Nombre de la locación" @bind="nuevoEstudioNombre" />
+                            <label class="flex items-center gap-2 text-xs text-text-secondary">
+                                <input type="checkbox" @bind="nuevoEstudioExterna" />
+                                Es externa
+                            </label>
+                            <button type="button" class="btn-secondary !px-4 !py-2 text-xs" @onclick="CrearEstudio">Crear</button>
+                        </div>
+                    }
+                </div>
+
+                <div>
+                    <label class="field-label">Tareas realizadas</label>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach (var tarea in catalogo)
+                        {
+                            <button type="button" class="@ChipClass(tarea.Id)" @onclick="() => ToggleTarea(tarea.Id)">
+                                @tarea.Nombre
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <label class="field-label">Descripción <span class="text-danger">*</span></label>
+                    <InputTextArea class="input-field" rows="2" maxlength="500" @bind-Value="Sesion.Descripcion" />
+                    <ValidationMessage For="() => Sesion.Descripcion" class="mt-1 text-xs text-danger" />
+                </div>
+
+                <div>
+                    <label class="field-label">Observaciones</label>
+                    <InputTextArea class="input-field" rows="2" maxlength="1000" @bind-Value="Sesion.Observaciones" />
+                    <p class="mt-1 text-xs text-text-secondary">Uso interno — no visible para el cliente.</p>
+                </div>
+            </div>
+
+            @if (errorMessage is not null)
+            {
+                <p class="mt-4 text-sm text-danger">@errorMessage</p>
+            }
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" class="btn-secondary" @onclick="OnCancelled">Cancelar</button>
+                <button type="submit" class="btn-primary" disabled="@saving">@(saving ? "Guardando..." : "Guardar")</button>
+            </div>
+        </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Sesion Sesion { get; set; } = default!;
+    [Parameter] public int ProyectoId { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+    [Parameter] public EventCallback OnCancelled { get; set; }
+
+    private List<UsuarioResumen> staff = new();
+    private List<Estudio> estudios = new();
+    private List<TareaCatalogo> catalogo = new();
+    private bool saving;
+    private bool mostrarNuevoEstudio;
+    private string nuevoEstudioNombre;
+    private bool nuevoEstudioExterna;
+    private string errorMessage;
+
+    private bool IsNew => Sesion.Id == 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        staff = await Http.GetFromJsonAsync<List<UsuarioResumen>>("api/usuarios/staff") ?? new List<UsuarioResumen>();
+        estudios = await Http.GetFromJsonAsync<List<Estudio>>("api/estudios") ?? new List<Estudio>();
+        catalogo = await Http.GetFromJsonAsync<List<TareaCatalogo>>("api/tareas/catalogo") ?? new List<TareaCatalogo>();
+
+        if (IsNew && Sesion.EstudioId == 0)
+        {
+            var principal = estudios.FirstOrDefault(e => e.Nombre == "Estudio principal");
+            if (principal is not null)
+            {
+                Sesion.EstudioId = principal.Id;
+            }
+        }
+
+        RecalcularHoras();
+    }
+
+    private void RecalcularHoras()
+    {
+        Sesion.CantidadHoras = Sesion.FechaFin.HasValue && Sesion.FechaFin.Value >= Sesion.FechaInicio
+            ? (decimal)Math.Ceiling((Sesion.FechaFin.Value - Sesion.FechaInicio).TotalHours)
+            : null;
+    }
+
+    private string ChipClass(int tareaId) =>
+        Sesion.TareaCatalogoIds.Contains(tareaId)
+            ? "rounded-full border border-primary/50 bg-primary/20 px-3 py-1.5 text-xs font-medium text-white"
+            : "rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-text-secondary transition-colors hover:text-white";
+
+    private void ToggleTarea(int tareaId)
+    {
+        if (!Sesion.TareaCatalogoIds.Remove(tareaId))
+        {
+            Sesion.TareaCatalogoIds.Add(tareaId);
+        }
+    }
+
+    private async Task CrearEstudio()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoEstudioNombre)) return;
+
+        var response = await Http.PostAsJsonAsync("api/estudios", new Estudio
+        {
+            Nombre = nuevoEstudioNombre,
+            EsLocacionExterna = nuevoEstudioExterna
+        });
+
+        if (response.IsSuccessStatusCode)
+        {
+            var creado = await response.Content.ReadFromJsonAsync<Estudio>();
+            estudios.Add(creado);
+            Sesion.EstudioId = creado.Id;
+            mostrarNuevoEstudio = false;
+            nuevoEstudioNombre = null;
+            nuevoEstudioExterna = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        saving = true;
+        errorMessage = null;
+
+        try
+        {
+            Sesion.ProyectoId = ProyectoId;
+
+            var response = IsNew
+                ? await Http.PostAsJsonAsync("api/sesiones", Sesion)
+                : await Http.PutAsJsonAsync($"api/sesiones/{Sesion.Id}", Sesion);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await OnSaved.InvokeAsync();
+            }
+            else
+            {
+                errorMessage = "No se pudo guardar la sesión. Revisá los datos ingresados.";
+            }
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error de conexión al guardar.";
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

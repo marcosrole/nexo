@@ -1,11 +1,89 @@
 @page "/dashboard"
 @layout MainLayout
 @attribute [Authorize(Roles = "Administrador")]
+@using System.Collections.Generic
+@using System.Linq
+@inject HttpClient Http
 
 <section class="mx-auto max-w-[1400px] px-6 pb-4 pt-14 lg:px-10">
     <p class="reveal text-sm font-medium uppercase tracking-[0.14em] text-text-secondary">Panel interno</p>
     <h1 class="reveal mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Hola de nuevo, equipo JCB Studio</h1>
+
+    <div class="reveal mt-6 flex flex-wrap gap-3">
+        <a href="/clientes" class="btn-secondary !px-4 !py-2 text-xs">
+            <Icon Name="clients" CssClass="h-4 w-4" />
+            Ver clientes
+        </a>
+    </div>
 </section>
 
-<KpiSection />
-<ModulesSection />
+<section class="mx-auto max-w-[1400px] px-6 pb-16 pt-6 lg:px-10">
+    <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold text-white">Proyectos activos</h2>
+        <a href="/proyectos" class="text-xs font-medium text-accent hover:underline">Ver todos los proyectos</a>
+    </div>
+
+    @if (loading)
+    {
+        <p class="mt-4 text-text-secondary">Cargando...</p>
+    }
+    else if (!proyectosActivos.Any())
+    {
+        <div class="surface-card mt-4 p-10 text-center text-text-secondary">
+            No hay proyectos en curso ahora mismo.
+        </div>
+    }
+    else
+    {
+        <div class="mt-4 space-y-3">
+            @foreach (var proyecto in proyectosActivos)
+            {
+                <div class="surface-card flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p class="font-medium text-white">
+                            @proyecto.Nombre
+                            @if (!string.IsNullOrWhiteSpace(proyecto.Referencia))
+                            {
+                                <span class="text-text-secondary"> · @proyecto.Referencia</span>
+                            }
+                        </p>
+                        <p class="text-sm text-text-secondary">@proyecto.Cliente?.NombreCompleto</p>
+                        @if (proyecto.TieneSesionAbierta)
+                        {
+                            <a href="@($"/sesiones/{proyecto.Id}")" class="tag-pill mt-2 inline-flex border-warning/40 bg-warning/15 text-warning hover:bg-warning/25">
+                                <span class="h-1.5 w-1.5 rounded-full bg-warning"></span>
+                                Sesión abierta
+                            </a>
+                        }
+                    </div>
+                    <a href="@($"/sesiones/{proyecto.Id}?nueva=true")" class="btn-primary !px-4 !py-2 text-xs">
+                        <Icon Name="calendar" CssClass="h-4 w-4" />
+                        + Nueva sesión
+                    </a>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    private List<Proyecto> proyectosActivos = new();
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var proyectos = await Http.GetFromJsonAsync<List<Proyecto>>("api/proyectos") ?? new List<Proyecto>();
+            proyectosActivos = proyectos.Where(p => p.Estado == EstadoProyecto.EnCurso).ToList();
+        }
+        catch (Exception)
+        {
+            proyectosActivos = new List<Proyecto>();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

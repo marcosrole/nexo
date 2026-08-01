@@ -63,9 +63,21 @@
                             <td class="px-6 py-4 text-text-secondary">@TarifaLabel(proyecto.Tarifa)</td>
                             <td class="px-6 py-4 text-text-secondary">@(proyecto.HorasContratadas?.ToString("0.##") ?? "—")</td>
                             <td class="px-6 py-4 text-right">
-                                <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="() => OpenEditModal(proyecto)" aria-label="Editar proyecto">
+                                <a href="@($"/sesiones/{proyecto.Id}")" class="text-text-secondary transition-colors hover:text-white" aria-label="Ver sesiones">
+                                    <Icon Name="calendar" CssClass="h-4 w-4" />
+                                </a>
+                                <button type="button" class="ml-3 text-text-secondary transition-colors hover:text-white" @onclick="() => OpenEditModal(proyecto)" aria-label="Editar proyecto">
                                     <Icon Name="editing" CssClass="h-4 w-4" />
                                 </button>
+                                @if (proyecto.Estado is EstadoProyecto.Presupuesto or EstadoProyecto.EnCurso)
+                                {
+                                    <button type="button" class="ml-3 text-xs font-medium text-success hover:underline" @onclick="() => FinalizarProyecto(proyecto)">
+                                        Finalizar
+                                    </button>
+                                    <button type="button" class="ml-3 text-xs font-medium text-danger hover:underline" @onclick="() => CancelarProyecto(proyecto)">
+                                        Cancelar
+                                    </button>
+                                }
                                 <button type="button" class="ml-3 text-text-secondary transition-colors hover:text-danger" @onclick="() => DeleteProyecto(proyecto)" aria-label="Eliminar proyecto">
                                     <Icon Name="close" CssClass="h-4 w-4" />
                                 </button>
@@ -117,7 +129,6 @@
     {
         EstadoProyecto.Presupuesto => "Presupuesto",
         EstadoProyecto.EnCurso => "En curso",
-        EstadoProyecto.EnPausa => "En pausa",
         EstadoProyecto.Finalizado => "Finalizado",
         EstadoProyecto.Cancelado => "Cancelado",
         _ => estado.ToString()
@@ -167,6 +178,30 @@
     {
         showModal = false;
         await LoadProyectos();
+    }
+
+    private async Task FinalizarProyecto(Proyecto proyecto)
+    {
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"¿Marcar \"{proyecto.Nombre}\" como Finalizado?");
+        if (!confirmed) return;
+
+        var response = await Http.PutAsync($"api/proyectos/{proyecto.Id}/finalizar", null);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadProyectos();
+        }
+    }
+
+    private async Task CancelarProyecto(Proyecto proyecto)
+    {
+        var confirmed = await JsRuntime.InvokeAsync<bool>("confirm", $"¿Cancelar el proyecto \"{proyecto.Nombre}\"?");
+        if (!confirmed) return;
+
+        var response = await Http.PutAsync($"api/proyectos/{proyecto.Id}/cancelar", null);
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadProyectos();
+        }
     }
 
     private async Task DeleteProyecto(Proyecto proyecto)

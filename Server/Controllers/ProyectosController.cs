@@ -28,6 +28,17 @@ namespace Nexo.Server.Controllers
                 .OrderByDescending(p => p.FechaInicio)
                 .ToListAsync();
 
+            var proyectosConSesionAbierta = await _db.Sesiones
+                .Where(s => s.FechaFin == null)
+                .Select(s => s.ProyectoId)
+                .Distinct()
+                .ToListAsync();
+
+            foreach (var proyecto in proyectos)
+            {
+                proyecto.TieneSesionAbierta = proyectosConSesionAbierta.Contains(proyecto.Id);
+            }
+
             return Ok(proyectos);
         }
 
@@ -54,6 +65,7 @@ namespace Nexo.Server.Controllers
 
             proyecto.Id = 0;
             proyecto.Cliente = null;
+            proyecto.Estado = EstadoProyecto.Presupuesto;
             if (proyecto.Tarifa != null) proyecto.Tarifa.Id = 0;
 
             _db.Proyectos.Add(proyecto);
@@ -75,7 +87,6 @@ namespace Nexo.Server.Controllers
             existente.Referencia = proyecto.Referencia;
             existente.ClienteId = proyecto.ClienteId;
             existente.FechaInicio = proyecto.FechaInicio;
-            existente.Estado = proyecto.Estado;
             existente.ProductorResponsableId = proyecto.ProductorResponsableId;
             existente.HorasContratadas = proyecto.HorasContratadas;
 
@@ -92,6 +103,30 @@ namespace Nexo.Server.Controllers
                 existente.Tarifa.FechaAcuerdo = proyecto.Tarifa.FechaAcuerdo;
             }
 
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id:int}/finalizar")]
+        public async Task<IActionResult> Finalizar(int id)
+        {
+            var proyecto = await _db.Proyectos.FindAsync(id);
+            if (proyecto == null) return NotFound();
+
+            proyecto.Estado = EstadoProyecto.Finalizado;
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        [HttpPut("{id:int}/cancelar")]
+        public async Task<IActionResult> Cancelar(int id)
+        {
+            var proyecto = await _db.Proyectos.FindAsync(id);
+            if (proyecto == null) return NotFound();
+
+            proyecto.Estado = EstadoProyecto.Cancelado;
             await _db.SaveChangesAsync();
 
             return NoContent();

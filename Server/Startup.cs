@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Nexo.Server.Data;
+using Nexo.Shared.Models;
 
 namespace Nexo.Server
 {
@@ -82,9 +83,12 @@ namespace Nexo.Server
         {
             using (var scope = app.ApplicationServices.CreateScope())
             {
-                scope.ServiceProvider.GetRequiredService<NexoDbContext>().Database.Migrate();
+                var db = scope.ServiceProvider.GetRequiredService<NexoDbContext>();
+                db.Database.Migrate();
                 SeedRolesAsync(scope.ServiceProvider).GetAwaiter().GetResult();
                 SeedAdminAsync(scope.ServiceProvider, Configuration).GetAwaiter().GetResult();
+                SeedAdminsAsync(scope.ServiceProvider, Configuration).GetAwaiter().GetResult();
+                SeedCatalogosAsync(db).GetAwaiter().GetResult();
             }
 
             if (env.IsDevelopment())
@@ -158,6 +162,101 @@ namespace Nexo.Server
             {
                 await userManager.AddToRoleAsync(admin, "Administrador");
             }
+        }
+
+        // Siembra de administradores adicionales (además del de SeedAdmin arriba). Igual que ese,
+        // las credenciales NUNCA viven en appsettings.json: se cargan con
+        // `dotnet user-secrets set "SeedAdmins:0:UserName" ...` en desarrollo, o como variables de
+        // entorno (SeedAdmins__0__UserName, etc.) en el hosting real. Si no hay ninguno configurado, no hace nada.
+        private static async Task SeedAdminsAsync(System.IServiceProvider services, IConfiguration configuration)
+        {
+            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+            foreach (var seccion in configuration.GetSection("SeedAdmins").GetChildren())
+            {
+                var userName = seccion["UserName"];
+                var nombreCompleto = seccion["NombreCompleto"];
+                var password = seccion["Password"];
+
+                if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+                    continue;
+
+                if (await userManager.FindByNameAsync(userName) != null)
+                    continue;
+
+                var admin = new ApplicationUser
+                {
+                    UserName = userName,
+                    NombreCompleto = string.IsNullOrWhiteSpace(nombreCompleto) ? userName : nombreCompleto,
+                    Activo = true,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(admin, password);
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(admin, "Administrador");
+                }
+            }
+        }
+
+        // Catálogo de tareas y estudios tomado directamente del relevamiento (docs/requerimientos-funcionales.md,
+        // Módulo 8). Solo se siembra si la tabla está vacía, para no pisar nada si el equipo ya lo editó.
+        private static async Task SeedCatalogosAsync(NexoDbContext db)
+        {
+            if (!await db.TareasCatalogo.AnyAsync())
+            {
+                db.TareasCatalogo.AddRange(
+                    new TareaCatalogo { Nombre = "Grabación de voces", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de batería", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de guitarras", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de bajos", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de teclados", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de acordeón", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de bandoneón", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de percusión", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Corrección de afinación", TipoTrabajo = TipoTrabajo.Edicion },
+                    new TareaCatalogo { Nombre = "Edición multimedia", TipoTrabajo = TipoTrabajo.Edicion },
+                    new TareaCatalogo { Nombre = "Edición de voces", TipoTrabajo = TipoTrabajo.Edicion },
+                    new TareaCatalogo { Nombre = "Edición de batería", TipoTrabajo = TipoTrabajo.Edicion },
+                    new TareaCatalogo { Nombre = "Edición de acordeón", TipoTrabajo = TipoTrabajo.Edicion },
+                    new TareaCatalogo { Nombre = "Edición de bandoneón", TipoTrabajo = TipoTrabajo.Edicion },
+                    new TareaCatalogo { Nombre = "Filmación", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Mezcla tema 1", TipoTrabajo = TipoTrabajo.Mezcla },
+                    new TareaCatalogo { Nombre = "Mezcla tema 2", TipoTrabajo = TipoTrabajo.Mezcla },
+                    new TareaCatalogo { Nombre = "Exportación de stems", TipoTrabajo = TipoTrabajo.Mezcla },
+                    new TareaCatalogo { Nombre = "Mastering", TipoTrabajo = TipoTrabajo.Mastering },
+                    new TareaCatalogo { Nombre = "Revisión con cliente", TipoTrabajo = TipoTrabajo.Otro },
+                    new TareaCatalogo { Nombre = "Cambios solicitados por cliente", TipoTrabajo = TipoTrabajo.Otro },
+                    new TareaCatalogo { Nombre = "Backup del proyecto", TipoTrabajo = TipoTrabajo.Otro },
+                    new TareaCatalogo { Nombre = "Otro", TipoTrabajo = TipoTrabajo.Otro }
+                );
+            }
+
+            // Altas puntuales (2026-08-01): el estudio también cotiza ensayos y clases de música,
+            // que no estaban en la siembra original. Se agregan solo si todavía no existen, para
+            // no reinsertar ni pisar nada en bases que ya tenían el catálogo cargado.
+            var nombresExistentes = await db.TareasCatalogo.Select(t => t.Nombre).ToListAsync();
+            var tareasNuevas = new[]
+            {
+                new TareaCatalogo { Nombre = "Ensayo", TipoTrabajo = TipoTrabajo.Ensayo },
+                new TareaCatalogo { Nombre = "Clases de música", TipoTrabajo = TipoTrabajo.Clases }
+            };
+
+            foreach (var tarea in tareasNuevas)
+            {
+                if (!nombresExistentes.Contains(tarea.Nombre))
+                {
+                    db.TareasCatalogo.Add(tarea);
+                }
+            }
+
+            if (!await db.Estudios.AnyAsync())
+            {
+                db.Estudios.Add(new Estudio { Nombre = "Estudio principal", EsLocacionExterna = false });
+            }
+
+            await db.SaveChangesAsync();
         }
     }
 }
