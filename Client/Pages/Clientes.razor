@@ -41,7 +41,7 @@
     }
     else
     {
-        <div class="surface-card reveal overflow-hidden">
+        <div class="surface-card reveal hidden overflow-hidden md:block">
             <table class="w-full text-left text-sm">
                 <thead class="border-b border-white/[0.06] text-xs uppercase tracking-wider text-text-secondary">
                     <tr>
@@ -80,6 +80,38 @@
                     }
                 </tbody>
             </table>
+        </div>
+
+        <div class="space-y-3 md:hidden">
+            @foreach (var cliente in FilteredClientes)
+            {
+                <div class="surface-card reveal p-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-medium text-white">@cliente.NombreCompleto</p>
+                            <p class="mt-1 text-sm text-text-secondary">@cliente.Email</p>
+                            @if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                            {
+                                <p class="text-xs text-text-secondary">@cliente.Telefono</p>
+                            }
+                        </div>
+                        <span class="tag-pill shrink-0">@(cliente.Tipo == TipoCliente.Empresa ? "Empresa" : "Persona")</span>
+                    </div>
+
+                    <p class="mt-3 text-xs text-text-secondary">CUIT: @(string.IsNullOrWhiteSpace(cliente.Cuit) ? "—" : cliente.Cuit)</p>
+
+                    <div class="mt-4 flex items-center gap-4 border-t border-white/[0.06] pt-4">
+                        <button type="button" class="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-white" @onclick="() => OpenEditModal(cliente)">
+                            <Icon Name="editing" CssClass="h-4 w-4" />
+                            Editar
+                        </button>
+                        <button type="button" class="ml-auto flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-danger" @onclick="() => DeleteCliente(cliente)">
+                            <Icon Name="close" CssClass="h-4 w-4" />
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            }
         </div>
     }
 </section>

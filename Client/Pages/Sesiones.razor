@@ -59,7 +59,7 @@
     }
     else
     {
-        <div class="surface-card reveal overflow-hidden">
+        <div class="surface-card reveal hidden overflow-hidden md:block">
             <div class="overflow-x-auto">
             <table class="w-full min-w-[820px] text-left text-sm">
                 <thead class="border-b border-white/[0.06] text-xs uppercase tracking-wider text-text-secondary">
@@ -112,6 +112,67 @@
                 </tbody>
             </table>
             </div>
+        </div>
+
+        <div class="space-y-3 md:hidden">
+            @foreach (var sesion in sesiones)
+            {
+                <div class="surface-card reveal p-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-medium text-white">@sesion.FechaInicio.ToString("dd/MM/yy HH:mm")</p>
+                            @if (!sesion.Abierta)
+                            {
+                                <p class="text-sm text-text-secondary">Fin: @sesion.FechaFin?.ToString("dd/MM/yy HH:mm")</p>
+                            }
+                        </div>
+                        @if (sesion.Abierta)
+                        {
+                            <span class="tag-pill shrink-0" style="border-color:rgba(245,158,11,.4); background:rgba(245,158,11,.12); color:#ffce7a;">Abierta</span>
+                        }
+                    </div>
+
+                    <dl class="mt-4 space-y-2 text-sm">
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-text-secondary">Responsable</dt>
+                            <dd class="text-white">@NombreUsuario(sesion.ResponsableId)</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-text-secondary">Estudio</dt>
+                            <dd class="text-white">@sesion.Estudio?.Nombre</dd>
+                        </div>
+                        <div class="flex justify-between gap-3">
+                            <dt class="text-text-secondary">Horas</dt>
+                            <dd class="text-white">@(sesion.CantidadHoras?.ToString("0.##") ?? "—")</dd>
+                        </div>
+                        @if (sesion.Tareas.Any())
+                        {
+                            <div>
+                                <dt class="text-text-secondary">Tareas</dt>
+                                <dd class="mt-0.5 text-white">@string.Join(", ", sesion.Tareas.Select(t => t.TareaCatalogo?.Nombre))</dd>
+                            </div>
+                        }
+                    </dl>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-4 border-t border-white/[0.06] pt-4">
+                        @if (sesion.Abierta)
+                        {
+                            <button type="button" class="tag-pill border-success/40 bg-success/15 text-success hover:bg-success/25" @onclick="() => OpenCloseModal(sesion)">
+                                <Icon Name="check" CssClass="h-3.5 w-3.5" />
+                                Cerrar
+                            </button>
+                        }
+                        <button type="button" class="flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-white" @onclick="() => OpenEditModal(sesion)">
+                            <Icon Name="editing" CssClass="h-4 w-4" />
+                            Editar
+                        </button>
+                        <button type="button" class="ml-auto flex items-center gap-1.5 text-xs font-medium text-text-secondary hover:text-danger" @onclick="() => DeleteSesion(sesion)">
+                            <Icon Name="close" CssClass="h-4 w-4" />
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            }
         </div>
     }
 </section>
