@@ -19,14 +19,15 @@ namespace Nexo.Server.Controllers
             _userManager = userManager;
         }
 
-        // Usuarios de staff (SuperAdministrador/Administrador), candidatos a "Productor responsable" de un proyecto.
+        // Usuarios de staff (Administrador), candidatos a "Productor responsable" de un proyecto.
+        // SuperAdministrador queda afuera a propósito: es la cuenta de acceso total, no un miembro
+        // de staff operativo asignable a proyectos/sesiones.
         [HttpGet("staff")]
         public async Task<ActionResult<IEnumerable<UsuarioResumen>>> GetStaff()
         {
-            var superAdministradores = await _userManager.GetUsersInRoleAsync("SuperAdministrador");
             var administradores = await _userManager.GetUsersInRoleAsync("Administrador");
 
-            var staff = superAdministradores.Concat(administradores)
+            var staff = administradores
                 .Where(u => u.Activo)
                 .GroupBy(u => u.Id)
                 .Select(g => g.First())
