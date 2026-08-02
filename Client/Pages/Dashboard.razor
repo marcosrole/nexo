@@ -1,6 +1,6 @@
 @page "/dashboard"
 @layout MainLayout
-@attribute [Authorize(Roles = "Administrador")]
+@attribute [Authorize(Roles = "SuperAdministrador,Administrador")]
 @using System.Collections.Generic
 @using System.Linq
 @inject HttpClient Http

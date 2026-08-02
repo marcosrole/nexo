@@ -124,17 +124,26 @@ namespace Nexo.Server
         {
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
-            foreach (var role in new[] { "Administrador", "Operador" })
+            foreach (var role in new[] { "SuperAdministrador", "Administrador" })
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {
                     await roleManager.CreateAsync(new IdentityRole<int>(role));
                 }
             }
+
+            // El rol Operador se dio de baja (2026-08-02): nunca se le asigno a ningun usuario,
+            // se elimina si quedo de un deploy anterior.
+            var operador = await roleManager.FindByNameAsync("Operador");
+            if (operador != null)
+            {
+                await roleManager.DeleteAsync(operador);
+            }
         }
 
-        // Bootstrap del primer usuario Administrador. Las credenciales NUNCA viven en appsettings.json:
-        // se cargan con `dotnet user-secrets set "SeedAdmin:UserName" ...` / "SeedAdmin:Password" en desarrollo,
+        // Bootstrap del primer usuario, con el rol mas alto (SuperAdministrador: acceso total).
+        // Las credenciales NUNCA viven en appsettings.json: se cargan con
+        // `dotnet user-secrets set "SeedAdmin:UserName" ...` / "SeedAdmin:Password" en desarrollo,
         // o como variables de entorno en el hosting real. Si no están configuradas, no hace nada.
         private static async Task SeedAdminAsync(System.IServiceProvider services, IConfiguration configuration)
         {
@@ -146,8 +155,18 @@ namespace Nexo.Server
 
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
-            if (await userManager.FindByNameAsync(userName) != null)
+            var existente = await userManager.FindByNameAsync(userName);
+            if (existente != null)
+            {
+                // Ya existe de un deploy anterior: solo nos aseguramos de que tenga el rol mas alto
+                // (por si se creo antes de que existiera SuperAdministrador).
+                if (!await userManager.IsInRoleAsync(existente, "SuperAdministrador"))
+                {
+                    await userManager.AddToRoleAsync(existente, "SuperAdministrador");
+                }
+
                 return;
+            }
 
             var admin = new ApplicationUser
             {
@@ -160,7 +179,7 @@ namespace Nexo.Server
             var result = await userManager.CreateAsync(admin, password);
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(admin, "Administrador");
+                await userManager.AddToRoleAsync(admin, "SuperAdministrador");
             }
         }
 
