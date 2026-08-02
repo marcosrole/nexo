@@ -79,11 +79,12 @@ namespace Nexo.Shared.Models
             {
                 if (string.IsNullOrWhiteSpace(RazonSocial))
                     yield return new ValidationResult("La razón social es obligatoria para una empresa.", new[] { nameof(RazonSocial) });
+
+                if (string.IsNullOrWhiteSpace(Cuit))
+                    yield return new ValidationResult("El CUIT es obligatorio para una empresa.", new[] { nameof(Cuit) });
             }
 
-            if (string.IsNullOrWhiteSpace(Cuit))
-                yield return new ValidationResult("El CUIL/CUIT es obligatorio.", new[] { nameof(Cuit) });
-            else if (!Regex.IsMatch(Cuit, CuitPattern))
+            if (!string.IsNullOrWhiteSpace(Cuit) && !Regex.IsMatch(Cuit, CuitPattern))
                 yield return new ValidationResult("El CUIL/CUIT debe tener el formato xx-xxxxxxxx-x.", new[] { nameof(Cuit) });
 
             if (string.IsNullOrWhiteSpace(CondicionFiscal))
