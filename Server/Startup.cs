@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Nexo.Server.Data;
 using Nexo.Shared.Models;
 
@@ -32,8 +33,12 @@ namespace Nexo.Server
 
             services.AddIdentity<ApplicationUser, IdentityRole<int>>(options =>
                 {
-                    // Equipo chico (2-3 personas): se pide una password razonable, sin exigir símbolo especial.
+                    // Equipo chico (2-3 personas): password simple, sin exigencias de complejidad.
                     options.Password.RequireNonAlphanumeric = false;
+                    options.Password.RequireDigit = false;
+                    options.Password.RequireUppercase = false;
+                    options.Password.RequireLowercase = false;
+                    options.Password.RequiredLength = 6;
                 })
                 .AddEntityFrameworkStores<NexoDbContext>()
                 .AddDefaultTokenProviders();
@@ -84,10 +89,11 @@ namespace Nexo.Server
             using (var scope = app.ApplicationServices.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<NexoDbContext>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Startup>>();
                 db.Database.Migrate();
                 SeedRolesAsync(scope.ServiceProvider).GetAwaiter().GetResult();
-                SeedAdminAsync(scope.ServiceProvider, Configuration).GetAwaiter().GetResult();
-                SeedAdminsAsync(scope.ServiceProvider, Configuration).GetAwaiter().GetResult();
+                SeedAdminAsync(scope.ServiceProvider, Configuration, logger).GetAwaiter().GetResult();
+                SeedAdminsAsync(scope.ServiceProvider, Configuration, logger).GetAwaiter().GetResult();
                 SeedCatalogosAsync(db).GetAwaiter().GetResult();
             }
 
@@ -145,7 +151,7 @@ namespace Nexo.Server
         // Las credenciales NUNCA viven en appsettings.json: se cargan con
         // `dotnet user-secrets set "SeedAdmin:UserName" ...` / "SeedAdmin:Password" en desarrollo,
         // o como variables de entorno en el hosting real. Si no están configuradas, no hace nada.
-        private static async Task SeedAdminAsync(System.IServiceProvider services, IConfiguration configuration)
+        private static async Task SeedAdminAsync(System.IServiceProvider services, IConfiguration configuration, ILogger logger)
         {
             var userName = configuration["SeedAdmin:UserName"];
             var password = configuration["SeedAdmin:Password"];
@@ -181,13 +187,18 @@ namespace Nexo.Server
             {
                 await userManager.AddToRoleAsync(admin, "SuperAdministrador");
             }
+            else
+            {
+                logger.LogWarning("No se pudo crear el SeedAdmin '{UserName}': {Errores}",
+                    userName, string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
         }
 
         // Siembra de administradores adicionales (además del de SeedAdmin arriba). Igual que ese,
         // las credenciales NUNCA viven en appsettings.json: se cargan con
         // `dotnet user-secrets set "SeedAdmins:0:UserName" ...` en desarrollo, o como variables de
         // entorno (SeedAdmins__0__UserName, etc.) en el hosting real. Si no hay ninguno configurado, no hace nada.
-        private static async Task SeedAdminsAsync(System.IServiceProvider services, IConfiguration configuration)
+        private static async Task SeedAdminsAsync(System.IServiceProvider services, IConfiguration configuration, ILogger logger)
         {
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
@@ -215,6 +226,11 @@ namespace Nexo.Server
                 if (result.Succeeded)
                 {
                     await userManager.AddToRoleAsync(admin, "Administrador");
+                }
+                else
+                {
+                    logger.LogWarning("No se pudo crear el SeedAdmin adicional '{UserName}': {Errores}",
+                        userName, string.Join("; ", result.Errors.Select(e => e.Description)));
                 }
             }
         }
