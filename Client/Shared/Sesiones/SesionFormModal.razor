@@ -19,19 +19,32 @@
             <p class="text-xs text-text-secondary"><span class="text-danger">*</span> Campo obligatorio</p>
 
             <div class="mt-4 space-y-4">
+                <div>
+                    <label class="field-label">Fecha <span class="text-danger">*</span></label>
+                    <input type="date" class="input-field" @bind="fecha" @bind:event="oninput" @bind:after="ActualizarFechas" />
+                </div>
+
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="field-label">Fecha y hora de inicio <span class="text-danger">*</span></label>
-                        <input type="datetime-local" class="input-field" @bind="Sesion.FechaInicio" @bind:format="yyyy-MM-ddTHH:mm" @bind:event="oninput" @bind:after="RecalcularHoras" />
+                        <label class="field-label">Hora de inicio <span class="text-danger">*</span></label>
+                        <input type="time" class="input-field" @bind="horaInicio" @bind:event="oninput" @bind:after="ActualizarFechas" />
                         <ValidationMessage For="() => Sesion.FechaInicio" class="mt-1 text-xs text-danger" />
                     </div>
                     <div>
-                        <label class="field-label">Fecha y hora de fin</label>
-                        <input type="datetime-local" class="input-field" @bind="Sesion.FechaFin" @bind:format="yyyy-MM-ddTHH:mm" @bind:event="oninput" @bind:after="RecalcularHoras" />
+                        <label class="field-label">Hora de fin</label>
+                        <input type="time" class="input-field" @bind="horaFin" @bind:event="oninput" @bind:after="ActualizarFechas" />
                         <p class="mt-1 text-xs text-text-secondary">Vacío = sesión abierta (se cierra otro día).</p>
                         <ValidationMessage For="() => Sesion.FechaFin" class="mt-1 text-xs text-danger" />
                     </div>
                 </div>
+
+                @if (horaFin.HasValue)
+                {
+                    <label class="flex items-center gap-2 text-xs text-text-secondary">
+                        <input type="checkbox" @bind="terminaDiaSiguiente" @bind:after="ActualizarFechas" />
+                        Termina al día siguiente (sesión nocturna que cruza la medianoche)
+                    </label>
+                }
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
@@ -137,6 +150,11 @@
     private bool nuevoEstudioExterna;
     private string errorMessage;
 
+    private DateTime fecha;
+    private TimeOnly horaInicio;
+    private TimeOnly? horaFin;
+    private bool terminaDiaSiguiente;
+
     private bool IsNew => Sesion.Id == 0;
 
     protected override async Task OnInitializedAsync()
@@ -153,6 +171,24 @@
                 Sesion.EstudioId = principal.Id;
             }
         }
+
+        fecha = Sesion.FechaInicio.Date;
+        horaInicio = TimeOnly.FromDateTime(Sesion.FechaInicio);
+        if (Sesion.FechaFin.HasValue)
+        {
+            horaFin = TimeOnly.FromDateTime(Sesion.FechaFin.Value);
+            terminaDiaSiguiente = Sesion.FechaFin.Value.Date > Sesion.FechaInicio.Date;
+        }
+
+        RecalcularHoras();
+    }
+
+    private void ActualizarFechas()
+    {
+        Sesion.FechaInicio = fecha.Date.Add(horaInicio.ToTimeSpan());
+        Sesion.FechaFin = horaFin.HasValue
+            ? fecha.Date.AddDays(terminaDiaSiguiente ? 1 : 0).Add(horaFin.Value.ToTimeSpan())
+            : null;
 
         RecalcularHoras();
     }
