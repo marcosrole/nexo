@@ -2,6 +2,7 @@
 @using System.Collections.Generic
 @using System.Linq
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-12" @onclick="OnCancelled">
     <div class="surface-card flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[80vh]" @onclick:stopPropagation="true">
@@ -12,8 +13,8 @@
             </button>
         </div>
 
-        <div class="overflow-y-auto p-4 sm:p-6">
-        <EditForm Model="Proyecto" OnValidSubmit="Submit">
+        <div class="overflow-y-auto p-4 sm:p-6" @ref="formRoot">
+        <EditForm EditContext="editContext" OnValidSubmit="Submit" OnInvalidSubmit="HandleInvalidSubmit">
             <DataAnnotationsValidator />
 
             <p class="mt-4 text-xs text-text-secondary"><span class="text-danger">*</span> Campo obligatorio</p>
@@ -132,6 +133,9 @@
     private List<UsuarioResumen> staff = new();
     private bool saving;
     private string errorMessage;
+    private EditContext editContext;
+    private ElementReference formRoot;
+    private bool focusPending;
 
     private bool IsNew => Proyecto.Id == 0;
 
@@ -146,8 +150,23 @@
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new EditContext(Proyecto);
         clientes = await Http.GetFromJsonAsync<List<Cliente>>("api/clientes") ?? new List<Cliente>();
         staff = await Http.GetFromJsonAsync<List<UsuarioResumen>>("api/usuarios/staff") ?? new List<UsuarioResumen>();
+    }
+
+    private void HandleInvalidSubmit()
+    {
+        focusPending = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusPending)
+        {
+            focusPending = false;
+            await JS.InvokeVoidAsync("nexoForms.focusFirstInvalid", formRoot);
+        }
     }
 
     private async Task Submit()

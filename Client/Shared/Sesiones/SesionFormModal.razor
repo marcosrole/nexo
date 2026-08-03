@@ -2,6 +2,7 @@
 @using System.Collections.Generic
 @using System.Linq
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-12" @onclick="OnCancelled">
     <div class="surface-card flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[80vh]" @onclick:stopPropagation="true">
@@ -12,8 +13,8 @@
             </button>
         </div>
 
-        <div class="overflow-y-auto p-4 sm:p-6">
-        <EditForm Model="Sesion" OnValidSubmit="Submit">
+        <div class="overflow-y-auto p-4 sm:p-6" @ref="formRoot">
+        <EditForm EditContext="editContext" OnValidSubmit="Submit" OnInvalidSubmit="HandleInvalidSubmit">
             <DataAnnotationsValidator />
 
             <p class="text-xs text-text-secondary"><span class="text-danger">*</span> Campo obligatorio</p>
@@ -21,18 +22,18 @@
             <div class="mt-4 space-y-4">
                 <div>
                     <label class="field-label">Fecha <span class="text-danger">*</span></label>
-                    <input type="date" class="input-field" @bind="fecha" @bind:event="oninput" @bind:after="ActualizarFechas" />
+                    <input type="date" class="@InputClass(nameof(Sesion.FechaInicio))" @bind="fecha" @bind:event="oninput" @bind:after="ActualizarFechas" />
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <label class="field-label">Hora de inicio <span class="text-danger">*</span></label>
-                        <input type="time" class="input-field" @bind="horaInicio" @bind:event="oninput" @bind:after="ActualizarFechas" />
+                        <input type="time" class="@InputClass(nameof(Sesion.FechaInicio))" @bind="horaInicio" @bind:event="oninput" @bind:after="ActualizarFechas" />
                         <ValidationMessage For="() => Sesion.FechaInicio" class="mt-1 text-xs text-danger" />
                     </div>
                     <div>
                         <label class="field-label">Hora de fin</label>
-                        <input type="time" class="input-field" @bind="horaFin" @bind:event="oninput" @bind:after="ActualizarFechas" />
+                        <input type="time" class="@InputClass(nameof(Sesion.FechaFin))" @bind="horaFin" @bind:event="oninput" @bind:after="ActualizarFechas" />
                         <p class="mt-1 text-xs text-text-secondary">Vacío = sesión abierta (se cierra otro día).</p>
                         <ValidationMessage For="() => Sesion.FechaFin" class="mt-1 text-xs text-danger" />
                     </div>
@@ -149,6 +150,9 @@
     private string nuevoEstudioNombre;
     private bool nuevoEstudioExterna;
     private string errorMessage;
+    private EditContext editContext;
+    private ElementReference formRoot;
+    private bool focusPending;
 
     private DateTime fecha;
     private TimeOnly horaInicio;
@@ -159,6 +163,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new EditContext(Sesion);
         staff = await Http.GetFromJsonAsync<List<UsuarioResumen>>("api/usuarios/staff") ?? new List<UsuarioResumen>();
         estudios = await Http.GetFromJsonAsync<List<Estudio>>("api/estudios") ?? new List<Estudio>();
         catalogo = await Http.GetFromJsonAsync<List<TareaCatalogo>>("api/tareas/catalogo") ?? new List<TareaCatalogo>();
@@ -181,6 +186,26 @@
         }
 
         RecalcularHoras();
+    }
+
+    private string InputClass(string fieldName)
+    {
+        var hasError = editContext is not null && editContext.GetValidationMessages(new FieldIdentifier(Sesion, fieldName)).Any();
+        return hasError ? "input-field invalid" : "input-field";
+    }
+
+    private void HandleInvalidSubmit()
+    {
+        focusPending = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusPending)
+        {
+            focusPending = false;
+            await JS.InvokeVoidAsync("nexoForms.focusFirstInvalid", formRoot);
+        }
     }
 
     private void ActualizarFechas()

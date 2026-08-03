@@ -1,5 +1,6 @@
 @namespace Nexo.Client.Shared.Clientes
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-12" @onclick="OnCancelled">
     <div class="surface-card flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden sm:max-h-[80vh]" @onclick:stopPropagation="true">
@@ -10,8 +11,8 @@
             </button>
         </div>
 
-        <div class="overflow-y-auto p-4 sm:p-6">
-        <EditForm Model="Cliente" OnValidSubmit="Submit">
+        <div class="overflow-y-auto p-4 sm:p-6" @ref="formRoot">
+        <EditForm EditContext="editContext" OnValidSubmit="Submit" OnInvalidSubmit="HandleInvalidSubmit">
             <DataAnnotationsValidator />
 
             <div class="mt-6 flex gap-2">
@@ -129,8 +130,30 @@
 
     private bool saving;
     private string errorMessage;
+    private EditContext editContext;
+    private ElementReference formRoot;
+    private bool focusPending;
 
     private bool IsNew => Cliente.Id == 0;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(Cliente);
+    }
+
+    private void HandleInvalidSubmit()
+    {
+        focusPending = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusPending)
+        {
+            focusPending = false;
+            await JS.InvokeVoidAsync("nexoForms.focusFirstInvalid", formRoot);
+        }
+    }
 
     private void SetTipo(TipoCliente tipo) => Cliente.Tipo = tipo;
 
