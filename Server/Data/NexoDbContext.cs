@@ -41,6 +41,7 @@ namespace Nexo.Server.Data
                 entity.Property(p => p.Estado).HasConversion<string>().HasMaxLength(20);
                 entity.Property(p => p.HorasContratadas).HasPrecision(10, 2);
                 entity.Ignore(p => p.TieneSesionAbierta);
+                entity.Ignore(p => p.CantidadSesiones);
 
                 entity.HasOne(p => p.Cliente)
                     .WithMany()

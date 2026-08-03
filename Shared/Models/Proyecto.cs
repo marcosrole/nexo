@@ -34,6 +34,8 @@ namespace Nexo.Shared.Models
 
         public bool TieneSesionAbierta { get; set; }
 
+        public int CantidadSesiones { get; set; }
+
         [Required]
         public Tarifa Tarifa { get; set; } = new Tarifa();
 

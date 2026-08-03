@@ -275,7 +275,8 @@ namespace Nexo.Server
             var tareasNuevas = new[]
             {
                 new TareaCatalogo { Nombre = "Ensayo", TipoTrabajo = TipoTrabajo.Ensayo },
-                new TareaCatalogo { Nombre = "Clases de música", TipoTrabajo = TipoTrabajo.Clases }
+                new TareaCatalogo { Nombre = "Clases de música", TipoTrabajo = TipoTrabajo.Clases },
+                new TareaCatalogo { Nombre = "Distribución digital", TipoTrabajo = TipoTrabajo.Otro }
             };
 
             foreach (var tarea in tareasNuevas)

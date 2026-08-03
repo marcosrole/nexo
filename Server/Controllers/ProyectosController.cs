@@ -34,9 +34,15 @@ namespace Nexo.Server.Controllers
                 .Distinct()
                 .ToListAsync();
 
+            var cantidadSesionesPorProyecto = await _db.Sesiones
+                .GroupBy(s => s.ProyectoId)
+                .Select(g => new { ProyectoId = g.Key, Cantidad = g.Count() })
+                .ToDictionaryAsync(g => g.ProyectoId, g => g.Cantidad);
+
             foreach (var proyecto in proyectos)
             {
                 proyecto.TieneSesionAbierta = proyectosConSesionAbierta.Contains(proyecto.Id);
+                proyecto.CantidadSesiones = cantidadSesionesPorProyecto.TryGetValue(proyecto.Id, out var cantidad) ? cantidad : 0;
             }
 
             return Ok(proyectos);

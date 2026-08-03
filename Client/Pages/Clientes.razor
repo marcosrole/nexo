@@ -48,7 +48,6 @@
                         <th class="px-6 py-4 font-medium">Cliente</th>
                         <th class="px-6 py-4 font-medium">Tipo</th>
                         <th class="px-6 py-4 font-medium">Contacto</th>
-                        <th class="px-6 py-4 font-medium">CUIT</th>
                         <th class="px-6 py-4 font-medium"></th>
                     </tr>
                 </thead>
@@ -67,7 +66,6 @@
                                     <div class="text-xs">@cliente.Telefono</div>
                                 }
                             </td>
-                            <td class="px-6 py-4 text-text-secondary">@(string.IsNullOrWhiteSpace(cliente.Cuit) ? "—" : cliente.Cuit)</td>
                             <td class="px-6 py-4 text-right">
                                 <button type="button" class="text-text-secondary transition-colors hover:text-white" @onclick="() => OpenEditModal(cliente)" aria-label="Editar cliente">
                                     <Icon Name="editing" CssClass="h-4 w-4" />
