@@ -243,13 +243,13 @@ namespace Nexo.Server
             {
                 db.TareasCatalogo.AddRange(
                     new TareaCatalogo { Nombre = "Grabación de voces", TipoTrabajo = TipoTrabajo.Grabacion },
-                    new TareaCatalogo { Nombre = "Grabación de batería", TipoTrabajo = TipoTrabajo.Grabacion },
-                    new TareaCatalogo { Nombre = "Grabación de guitarras", TipoTrabajo = TipoTrabajo.Grabacion },
-                    new TareaCatalogo { Nombre = "Grabación de bajos", TipoTrabajo = TipoTrabajo.Grabacion },
-                    new TareaCatalogo { Nombre = "Grabación de teclados", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de batería", TipoTrabajo = TipoTrabajo.GrabacionInstrumento },
+                    new TareaCatalogo { Nombre = "Grabación de guitarras", TipoTrabajo = TipoTrabajo.GrabacionInstrumento },
+                    new TareaCatalogo { Nombre = "Grabación de bajos", TipoTrabajo = TipoTrabajo.GrabacionInstrumento },
+                    new TareaCatalogo { Nombre = "Grabación de teclados", TipoTrabajo = TipoTrabajo.GrabacionInstrumento },
                     new TareaCatalogo { Nombre = "Grabación de acordeón", TipoTrabajo = TipoTrabajo.Grabacion },
-                    new TareaCatalogo { Nombre = "Grabación de bandoneón", TipoTrabajo = TipoTrabajo.Grabacion },
-                    new TareaCatalogo { Nombre = "Grabación de percusión", TipoTrabajo = TipoTrabajo.Grabacion },
+                    new TareaCatalogo { Nombre = "Grabación de bandoneón", TipoTrabajo = TipoTrabajo.GrabacionInstrumento },
+                    new TareaCatalogo { Nombre = "Grabación de percusión", TipoTrabajo = TipoTrabajo.GrabacionInstrumento },
                     new TareaCatalogo { Nombre = "Corrección de afinación", TipoTrabajo = TipoTrabajo.Edicion },
                     new TareaCatalogo { Nombre = "Edición multimedia", TipoTrabajo = TipoTrabajo.Edicion },
                     new TareaCatalogo { Nombre = "Edición de voces", TipoTrabajo = TipoTrabajo.Edicion },
@@ -276,7 +276,7 @@ namespace Nexo.Server
             {
                 new TareaCatalogo { Nombre = "Ensayo", TipoTrabajo = TipoTrabajo.Ensayo },
                 new TareaCatalogo { Nombre = "Clases de música", TipoTrabajo = TipoTrabajo.Clases },
-                new TareaCatalogo { Nombre = "Distribución digital", TipoTrabajo = TipoTrabajo.Otro }
+                new TareaCatalogo { Nombre = "Distribución digital", TipoTrabajo = TipoTrabajo.Distribucion }
             };
 
             foreach (var tarea in tareasNuevas)
@@ -285,6 +285,28 @@ namespace Nexo.Server
                 {
                     db.TareasCatalogo.Add(tarea);
                 }
+            }
+
+            // Reclasificación (2026-08-03): las grabaciones de instrumentos puntuales quedaban
+            // mezcladas bajo el tipo genérico "Grabación" junto con voces y filmación. Se agrupan
+            // en su propio tipo para bases que ya tenían el catálogo cargado con la clasificación vieja.
+            var nombresGrabacionInstrumento = new[]
+            {
+                "Grabación de batería",
+                "Grabación de guitarras",
+                "Grabación de bajos",
+                "Grabación de teclados",
+                "Grabación de bandoneón",
+                "Grabación de percusión"
+            };
+
+            var tareasAReclasificar = await db.TareasCatalogo
+                .Where(t => nombresGrabacionInstrumento.Contains(t.Nombre) && t.TipoTrabajo != TipoTrabajo.GrabacionInstrumento)
+                .ToListAsync();
+
+            foreach (var tarea in tareasAReclasificar)
+            {
+                tarea.TipoTrabajo = TipoTrabajo.GrabacionInstrumento;
             }
 
             if (!await db.Estudios.AnyAsync())
