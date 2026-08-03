@@ -7,7 +7,7 @@
 
 <section class="mx-auto max-w-[1400px] px-6 pb-4 pt-14 lg:px-10">
     <p class="reveal text-sm font-medium uppercase tracking-[0.14em] text-text-secondary">Panel interno</p>
-    <h1 class="reveal mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Hola de nuevo, equipo JCB Studio</h1>
+    <h1 class="reveal mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">Hola de nuevo, @(nombreUsuario ?? "equipo JCB Studio")</h1>
 
     <div class="reveal mt-6 flex flex-wrap gap-3">
         <a href="/clientes" class="btn-secondary !px-4 !py-2 text-xs">
@@ -68,6 +68,7 @@
 
 @code {
     private List<Proyecto> proyectosActivos = new();
+    private string nombreUsuario;
     private bool loading = true;
 
     protected override async Task OnInitializedAsync()
@@ -75,11 +76,28 @@
         try
         {
             var proyectos = await Http.GetFromJsonAsync<List<Proyecto>>("api/proyectos") ?? new List<Proyecto>();
-            proyectosActivos = proyectos.Where(p => p.Estado == EstadoProyecto.EnCurso).ToList();
+            proyectosActivos = proyectos
+                .Where(p => p.Estado == EstadoProyecto.EnCurso)
+                .OrderByDescending(p => p.TieneSesionAbierta)
+                .ToList();
         }
         catch (Exception)
         {
             proyectosActivos = new List<Proyecto>();
+        }
+
+        try
+        {
+            var response = await Http.GetAsync("api/account/me");
+            if (response.IsSuccessStatusCode)
+            {
+                var sesion = await response.Content.ReadFromJsonAsync<SesionActual>();
+                nombreUsuario = sesion?.NombreCompleto?.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            }
+        }
+        catch (Exception)
+        {
+            // Sin sesión iniciada o servidor no disponible: se mantiene el saludo genérico.
         }
         finally
         {
